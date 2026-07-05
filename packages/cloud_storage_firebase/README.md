@@ -9,12 +9,22 @@ Firebase Storage + Firestore implementation of [`cloud_storage_platform_interfac
 3. Deploy the [Cloud Functions](../../functions) for thumbnail generation, with the same prefixes you pass to the package.
 4. Deploy security rules that fit your chosen layout (see below).
 
+## Storage layout
+
+The bucket layout is flat: every file's bytes live directly under `storagePath`, keyed by nodeId. Thumbnails and previews (written by the Cloud Function) go in sibling `thumbs/` and `previews/` subfolders. The Firestore folder hierarchy is entirely independent — renaming or moving a file in Firestore never touches Storage.
+
+```
+{storagePath}/{nodeId}.{ext}          ← original bytes
+{storagePath}/thumbs/{nodeId}.jpg     ← generated
+{storagePath}/previews/{nodeId}.jpg   ← generated
+```
+
 ## Usage
 
 ```dart
 final storage = FirebaseCloudStorage(
-  firestorePath: 'users/$uid/nodes',   // any Firestore collection path
-  storagePath: 'users/$uid/blobs',     // any bucket prefix
+  firestorePath: 'files',    // any Firestore collection path
+  storagePath: 'files',      // any bucket prefix
 );
 
 final folder = await storage.createFolder(

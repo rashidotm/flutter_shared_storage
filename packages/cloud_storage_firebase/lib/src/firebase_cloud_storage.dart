@@ -305,16 +305,23 @@ class FirebaseCloudStorage implements CloudStorage {
     if (node is! CloudFile) {
       throw const InvalidArgumentException('Node is a folder, not a file');
     }
-    // Delete from cache, storage, then Firestore.
     await _cache.removeFile(node.id).catchError((_) {});
-    if (node.storagePath.isNotEmpty) {
+
+    // Best-effort purge of the original + Cloud-Function-generated variants.
+    // Missing objects are fine — the Firestore doc is the source of truth.
+    final paths = <String>[
+      if (node.storagePath.isNotEmpty) node.storagePath,
+      thumbPathFor(_storageRoot, node.id),
+      previewPathFor(_storageRoot, node.id),
+    ];
+    for (final path in paths) {
       try {
-        await _storage.ref(node.storagePath).delete();
+        await _storage.ref(path).delete();
       } on fbs.FirebaseException catch (e) {
-        // object-not-found is fine; the doc is what matters.
         if (e.code != 'object-not-found') rethrow;
       }
     }
+
     await _nodes.doc(fileId).delete();
   }
 
