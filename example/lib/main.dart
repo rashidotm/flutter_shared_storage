@@ -193,11 +193,13 @@ class _FolderScreenState extends State<FolderScreen> {
         children: [
           FloatingActionButton.small(
             heroTag: 'newFolder',
+            tooltip: 'New folder',
             onPressed: _createFolder,
             child: const Icon(Icons.create_new_folder),
           ),
-          FloatingActionButton(
+          FloatingActionButton.small(
             heroTag: 'upload',
+            tooltip: 'Upload file',
             onPressed: _uploadFile,
             child: const Icon(Icons.upload_file),
           ),
