@@ -37,16 +37,22 @@ class ExampleApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: MaterialApp(
-        title: 'cloud_storage example',
-        theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.indigo),
-        home: FolderScreen(
-          storage: storage,
-          folderId: kRootFolderId,
-          title: 'Home',
-        ),
+    return MaterialApp(
+      title: 'cloud_storage example',
+      theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.indigo),
+      // MaterialApp creates its own Directionality from `locale`, so an outer
+      // `Directionality(...)` wrapper is silently overridden. To force a
+      // direction for testing, inject one via `builder` — it wraps every
+      // route between MaterialApp's Directionality and the route content.
+      // In a real app, just set `locale` / rely on the device locale.
+      builder: (context, child) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: child!,
+      ),
+      home: FolderScreen(
+        storage: storage,
+        folderId: kRootFolderId,
+        title: 'Home',
       ),
     );
   }
