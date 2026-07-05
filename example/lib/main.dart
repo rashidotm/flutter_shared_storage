@@ -190,19 +190,18 @@ class _FolderScreenState extends State<FolderScreen> {
       floatingActionButton: Wrap(
         direction: Axis.vertical,
         spacing: 8,
-        crossAxisAlignment: WrapCrossAlignment.end,
         children: [
-          FloatingActionButton.extended(
+          FloatingActionButton(
             heroTag: 'newFolder',
+            tooltip: 'Create folder',
             onPressed: _createFolder,
-            icon: const Icon(Icons.create_new_folder),
-            label: const Text('Create folder'),
+            child: const Icon(Icons.create_new_folder),
           ),
-          FloatingActionButton.extended(
+          FloatingActionButton(
             heroTag: 'upload',
+            tooltip: 'Upload file',
             onPressed: _uploadFile,
-            icon: const Icon(Icons.upload_file),
-            label: const Text('Upload file'),
+            child: const Icon(Icons.upload_file),
           ),
         ],
       ),
