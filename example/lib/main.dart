@@ -47,7 +47,7 @@ class ExampleApp extends StatelessWidget {
       // route between MaterialApp's Directionality and the route content.
       // In a real app, just set `locale` / rely on the device locale.
       builder: (context, child) => Directionality(
-        textDirection: TextDirection.ltr,
+        textDirection: TextDirection.rtl,
         child: child!,
       ),
       home: FolderScreen(
@@ -161,8 +161,7 @@ class _FolderScreenState extends State<FolderScreen> {
                   ),
                 );
               },
-              onNodeLongPress: (node, details) =>
-                  _showNodeMenu(node, details.globalPosition),
+              onNodeLongPress: (node, details) => _showNodeMenu(node, details.globalPosition),
             ),
           ),
         ],
@@ -237,8 +236,7 @@ class _FolderScreenState extends State<FolderScreen> {
   // ── Long-press popup menu + actions ─────────────────────────────────────
 
   Future<void> _showNodeMenu(CloudNode node, Offset globalPos) async {
-    final overlay =
-        Overlay.of(context).context.findRenderObject()! as RenderBox;
+    final overlay = Overlay.of(context).context.findRenderObject()! as RenderBox;
     final position = RelativeRect.fromRect(
       Rect.fromPoints(globalPos, globalPos),
       Offset.zero & overlay.size,
@@ -410,7 +408,6 @@ class _FolderScreenState extends State<FolderScreen> {
       MapEntry('Updated', node.updatedAt.toLocal().toString()),
       if (node is CloudFile) MapEntry('MIME', node.mimeType),
       if (node is CloudFile) MapEntry('Size', _formatBytes(node.sizeBytes)),
-      if (node is CloudFile) MapEntry('Storage path', node.storagePath),
     ];
     await showDialog<void>(
       context: context,
@@ -449,9 +446,7 @@ class _FolderScreenState extends State<FolderScreen> {
       builder: (_) => AlertDialog(
         title: Text('Delete ${node.name}?'),
         content: Text(
-          isFolder
-              ? 'This will delete the folder and all its contents. This cannot be undone.'
-              : 'This cannot be undone.',
+          isFolder ? 'This will delete the folder and all its contents. This cannot be undone.' : 'This cannot be undone.',
         ),
         actions: [
           TextButton(
