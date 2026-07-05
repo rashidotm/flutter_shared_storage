@@ -234,6 +234,12 @@ class _FolderScreenState extends State<FolderScreen> {
           thumbnails == null ? null : BytesSource(thumbnails.preview),
     );
 
+    // We only use `task.progress` for UI. If the user cancels, `task.result`
+    // completes with an error; without a listener, that becomes an unhandled
+    // zone error and Flutter treats it as a crash. `.ignore()` attaches a
+    // no-op handler so the error is silently absorbed.
+    task.result.ignore();
+
     if (!mounted) return;
     unawaited(
       showDialog<void>(
@@ -489,16 +495,32 @@ class _FolderScreenState extends State<FolderScreen> {
   }
 }
 
-class _UploadDialog extends StatelessWidget {
+class _UploadDialog extends StatefulWidget {
   const _UploadDialog({required this.task});
   final UploadTask task;
+
+  @override
+  State<_UploadDialog> createState() => _UploadDialogState();
+}
+
+class _UploadDialogState extends State<_UploadDialog> {
+  // Guards against double-pop: the cancel button and the terminal-status
+  // handler in the StreamBuilder can both race to dismiss the dialog. If
+  // both fire and each calls Navigator.pop, we'd pop the folder screen too.
+  bool _popped = false;
+
+  void _popOnce() {
+    if (_popped || !mounted) return;
+    _popped = true;
+    Navigator.of(context).pop();
+  }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Uploading'),
       content: StreamBuilder<UploadProgress>(
-        stream: task.progress,
+        stream: widget.task.progress,
         builder: (context, snap) {
           final p = snap.data;
           if (p == null) {
@@ -508,9 +530,7 @@ class _UploadDialog extends StatelessWidget {
             );
           }
           if (p.isTerminal) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (Navigator.of(context).canPop()) Navigator.of(context).pop();
-            });
+            WidgetsBinding.instance.addPostFrameCallback((_) => _popOnce());
           }
           final fraction = p.fraction;
           return Column(
@@ -528,8 +548,8 @@ class _UploadDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () async {
-            await task.cancel();
-            if (context.mounted) Navigator.of(context).pop();
+            await widget.task.cancel();
+            _popOnce();
           },
           child: const Text('Cancel'),
         ),
