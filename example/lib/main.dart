@@ -117,11 +117,16 @@ class _FolderScreenState extends State<FolderScreen> {
               },
               onFileTap: (file, mediaSiblings) {
                 if (!file.isMedia) return;
+                // CloudMediaViewer is headless — wrap it in a Scaffold so the
+                // developer controls chrome (back button, title, actions).
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
-                    builder: (_) => CloudMediaViewer(
-                      files: mediaSiblings,
-                      initialIndex: mediaSiblings.indexOf(file),
+                    builder: (_) => Scaffold(
+                      appBar: AppBar(title: Text(file.name)),
+                      body: CloudMediaViewer(
+                        files: mediaSiblings,
+                        initialIndex: mediaSiblings.indexOf(file),
+                      ),
                     ),
                   ),
                 );

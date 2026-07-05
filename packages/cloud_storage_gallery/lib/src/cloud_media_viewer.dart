@@ -6,7 +6,26 @@ import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:video_player/video_player.dart';
 
-/// Full-screen pageable viewer for a list of [CloudFile] media (images + videos).
+/// Pageable viewer for a list of [CloudFile] media (images + videos).
+///
+/// Headless — this widget is just the swipeable content. The consumer is
+/// responsible for placing it inside a [Scaffold] (or any bounded parent),
+/// providing an app bar / back button, and reacting to page changes via
+/// [onPageChanged] if they want to display the current file's name.
+///
+/// Typical use:
+///
+/// ```dart
+/// Navigator.of(context).push(MaterialPageRoute(
+///   builder: (_) => Scaffold(
+///     appBar: AppBar(), // gives you the back button automatically
+///     body: CloudMediaViewer(
+///       files: mediaSiblings,
+///       initialIndex: mediaSiblings.indexOf(tappedFile),
+///     ),
+///   ),
+/// ));
+/// ```
 class CloudMediaViewer extends StatefulWidget {
   const CloudMediaViewer({
     super.key,
@@ -26,7 +45,6 @@ class CloudMediaViewer extends StatefulWidget {
 class _CloudMediaViewerState extends State<CloudMediaViewer> {
   late final PageController _controller =
       PageController(initialPage: widget.initialIndex);
-  late int _index = widget.initialIndex;
 
   @override
   void dispose() {
@@ -36,28 +54,15 @@ class _CloudMediaViewerState extends State<CloudMediaViewer> {
 
   @override
   Widget build(BuildContext context) {
-    final file = widget.files[_index];
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          file.name,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ),
-      body: PageView.builder(
-        controller: _controller,
-        itemCount: widget.files.length,
-        onPageChanged: (i) {
-          setState(() => _index = i);
-          widget.onPageChanged?.call(i, widget.files[i]);
-        },
-        itemBuilder: (context, i) {
-          final f = widget.files[i];
-          if (f.isVideo) return _VideoPage(file: f);
-          return _ImagePage(file: f);
-        },
-      ),
+    return PageView.builder(
+      controller: _controller,
+      itemCount: widget.files.length,
+      onPageChanged: (i) => widget.onPageChanged?.call(i, widget.files[i]),
+      itemBuilder: (context, i) {
+        final f = widget.files[i];
+        if (f.isVideo) return _VideoPage(file: f);
+        return _ImagePage(file: f);
+      },
     );
   }
 }
