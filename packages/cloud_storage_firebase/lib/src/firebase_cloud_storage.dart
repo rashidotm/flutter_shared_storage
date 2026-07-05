@@ -185,6 +185,8 @@ class FirebaseCloudStorage implements CloudStorage {
     required String name,
     required Source source,
     String? mimeType,
+    Source? thumbnail,
+    Source? preview,
   }) {
     final controller = _DeferredUploadTask();
     unawaited(
@@ -193,6 +195,8 @@ class FirebaseCloudStorage implements CloudStorage {
         name: name,
         source: source,
         mimeType: mimeType,
+        thumbnail: thumbnail,
+        preview: preview,
         controller: controller,
       ),
     );
@@ -204,6 +208,8 @@ class FirebaseCloudStorage implements CloudStorage {
     required String name,
     required Source source,
     required String? mimeType,
+    required Source? thumbnail,
+    required Source? preview,
     required _DeferredUploadTask controller,
   }) async {
     try {
@@ -239,9 +245,6 @@ class FirebaseCloudStorage implements CloudStorage {
         kFieldUpdatedAt: FieldValue.serverTimestamp(),
       });
 
-      // nodeId is stored on the object for debug/cross-check. The Cloud
-      // Function pairs storage objects with Firestore docs by extracting
-      // nodeId from the storage path under its configured prefix.
       final metadata = fbs.SettableMetadata(
         contentType: guessedMime,
         customMetadata: <String, String>{'nodeId': doc.id},
@@ -260,9 +263,34 @@ class FirebaseCloudStorage implements CloudStorage {
           nodeDoc: doc,
           onSuccess: (snap) async {
             final url = await ref.getDownloadURL();
+
+            // Upload variants in parallel with the URL fetch, if provided.
+            // Variants are best-effort: a failure of a variant does not
+            // fail the whole upload — the original bytes are already up.
+            final results = await Future.wait([
+              if (thumbnail != null)
+                _uploadVariant(
+                  source: thumbnail,
+                  path: thumbPathFor(_storageRoot, doc.id),
+                )
+              else
+                Future<String?>.value(null),
+              if (preview != null)
+                _uploadVariant(
+                  source: preview,
+                  path: previewPathFor(_storageRoot, doc.id),
+                )
+              else
+                Future<String?>.value(null),
+            ]);
+            final thumbUrl = results[0];
+            final previewUrl = results[1];
+
             await doc.update(<String, Object?>{
               kFieldDownloadUrl: url,
               kFieldSizeBytes: snap.totalBytes,
+              if (thumbUrl != null) kFieldThumbnailUrl: thumbUrl,
+              if (previewUrl != null) kFieldPreviewUrl: previewUrl,
               kFieldUpdatedAt: FieldValue.serverTimestamp(),
             });
           },
@@ -270,6 +298,29 @@ class FirebaseCloudStorage implements CloudStorage {
       );
     } catch (e, st) {
       controller._fail(e, st);
+    }
+  }
+
+  /// Uploads a JPEG variant (thumbnail or preview) to [path]. Returns the
+  /// download URL on success, or `null` if the variant upload failed —
+  /// variant failures don't fail the whole upload.
+  Future<String?> _uploadVariant({
+    required Source source,
+    required String path,
+  }) async {
+    try {
+      final ref = _storage.ref(path);
+      final metadata = fbs.SettableMetadata(contentType: 'image/jpeg');
+      final fbs.UploadTask task = switch (source) {
+        FileSource(:final file) => ref.putFile(file, metadata),
+        BytesSource(:final bytes) => ref.putData(bytes, metadata),
+        XFileSource(:final xfile) =>
+          ref.putData(await xfile.readAsBytes(), metadata),
+      };
+      await task;
+      return await ref.getDownloadURL();
+    } catch (_) {
+      return null;
     }
   }
 

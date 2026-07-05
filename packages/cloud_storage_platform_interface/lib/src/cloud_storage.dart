@@ -45,12 +45,24 @@ abstract class CloudStorage {
   // ── Files ─────────────────────────────────────────────────────────────────
 
   /// Starts an upload. The returned [UploadTask] exposes a progress stream
-  /// and the final [CloudFile]. Auto-renames on conflict.
+  /// (tracking only the original) and the final [CloudFile]. Auto-renames
+  /// on conflict.
+  ///
+  /// If [thumbnail] and/or [preview] are supplied, the package writes them
+  /// alongside the original at the well-known variant paths and populates
+  /// `thumbnailUrl` / `previewUrl` on the resulting [CloudFile]. The caller
+  /// is responsible for generating them — the package does not do any
+  /// image/video processing.
+  ///
+  /// Both variants should be **JPEG** bytes/files. They're written to
+  /// `.jpg` paths regardless of the source's actual format.
   UploadTask upload({
     required String parentId,
     required String name,
     required Source source,
     String? mimeType,
+    Source? thumbnail,
+    Source? preview,
   });
 
   /// Downloads the file's bytes to a local cache and returns the file handle.

@@ -11,6 +11,7 @@ import 'package:share_plus/share_plus.dart';
 
 import 'firebase_options.dart';
 import 'folder_picker.dart';
+import 'thumbnail_generator.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -217,10 +218,20 @@ class _FolderScreenState extends State<FolderScreen> {
     final pathStr = picked.path;
     if (pathStr == null) return;
 
+    final file = File(pathStr);
+
+    // Generate thumbnails client-side. Returns null for non-media types
+    // (PDFs, docs, etc.) — those upload without variants.
+    final thumbnails = await generateThumbnails(file);
+
     final task = _storage.upload(
       parentId: widget.folderId,
       name: picked.name,
-      source: FileSource(File(pathStr)),
+      source: FileSource(file),
+      thumbnail:
+          thumbnails == null ? null : BytesSource(thumbnails.thumb),
+      preview:
+          thumbnails == null ? null : BytesSource(thumbnails.preview),
     );
 
     if (!mounted) return;
