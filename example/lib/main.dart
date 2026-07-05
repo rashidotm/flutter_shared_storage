@@ -180,7 +180,7 @@ class _FolderScreenState extends State<FolderScreen> {
             heroTag: 'upload',
             tooltip: 'Upload file',
             onPressed: _uploadFile,
-            child: const Icon(Icons.upload_file),
+            child: const Icon(Icons.note_add),
           ),
         ],
       ),
