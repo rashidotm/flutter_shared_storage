@@ -18,13 +18,12 @@ Future<void> main() async {
   if (FirebaseAuth.instance.currentUser == null) {
     await FirebaseAuth.instance.signInAnonymously();
   }
-  final uid = FirebaseAuth.instance.currentUser!.uid;
 
   // The package no longer assumes any particular layout — supply both
   // prefixes. Scoping by uid mirrors what most apps want.
   final storage = defaultCloudStorage(
-    firestorePath: 'users/$uid/nodes',
-    storagePath: 'users/$uid/blobs',
+    firestorePath: 'files',
+    storagePath: 'files',
   );
 
   runApp(ExampleApp(storage: storage));
