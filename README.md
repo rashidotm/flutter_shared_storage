@@ -1,5 +1,8 @@
 # flutter_shared_storage
 
+[![CI](https://github.com/rashidotm/flutter_shared_storage/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/rashidotm/flutter_shared_storage/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 A federated Flutter package suite for storing files and folders in the cloud, with a Firebase backend.
 
 ## Packages
