@@ -1,0 +1,23 @@
+name: cloud_storage_gallery
+description: Optional photo/video viewer and folder grid widgets for cloud_storage.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+  flutter: ">=3.19.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cloud_storage_platform_interface:
+    path: ../cloud_storage_platform_interface
+  cached_network_image: ^3.4.1
+  photo_view: ^0.15.0
+  video_player: ^2.9.2
+  chewie: ^1.8.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0

@@ -1,0 +1,41 @@
+name: flutter_shared_storage
+repository: https://github.com/your-org/flutter_shared_storage
+
+packages:
+  - packages/*
+  - example
+
+ide:
+  intellij: false
+
+command:
+  bootstrap:
+    runPubGetInParallel: true
+  version:
+    branch: main
+    workspaceChangelog: true
+
+scripts:
+  analyze:
+    run: melos exec -- "dart analyze ."
+    description: Run dart analyze in every package.
+
+  format:
+    run: melos exec -- "dart format ."
+    description: Format every package.
+
+  format-check:
+    run: melos exec -- "dart format --set-exit-if-changed ."
+    description: Verify formatting in CI.
+
+  test:
+    run: melos exec --dir-exists=test -- "flutter test"
+    description: Run tests in every package that has a test/ directory.
+
+  build_runner:
+    run: melos exec --depends-on=build_runner -- "dart run build_runner build --delete-conflicting-outputs"
+    description: Run code generation in packages that need it.
+
+  clean:
+    run: melos exec -- "flutter clean"
+    description: Clean every package.

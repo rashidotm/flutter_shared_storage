@@ -1,0 +1,15 @@
+name: cloud_storage_platform_interface
+description: Platform interface for cloud_storage. Backend-agnostic contract for cloud file/folder storage.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  meta: ^1.12.0
+  cross_file: ^0.3.4+2
+
+dev_dependencies:
+  test: ^1.25.0
+  flutter_lints: ^4.0.0

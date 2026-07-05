@@ -1,0 +1,48 @@
+# Dart / Flutter
+.dart_tool/
+.packages
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Generated
+*.g.dart
+*.freezed.dart
+*.mocks.dart
+
+# Firebase
+google-services.json
+GoogleService-Info.plist
+firebase_options.dart
+.firebase/
+firebase-debug.log
+
+# Functions
+functions/node_modules/
+functions/lib/
+functions/.runtimeconfig.json
+
+# Local env files (real values). `.env.example` is committed.
+.env
+.env.*
+!.env.example
+
+# Coverage
+coverage/
+
+# Melos
+.melos_tool/
+
+# Claude Code (per-user local overrides — settings.json can still be committed).
+.claude/settings.local.json
