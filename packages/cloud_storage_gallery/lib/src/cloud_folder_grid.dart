@@ -4,6 +4,15 @@ import 'package:flutter/material.dart';
 
 /// Live grid of a folder's contents — folders shown as folder tiles, files as
 /// thumbnails (or generic icons until the Cloud Function generates a thumbnail).
+/// Signature for a long-press on a node in [CloudFolderGrid]. Exposes
+/// the tap details so consumers can position a menu at the touch point.
+typedef CloudNodeLongPressCallback = void Function(
+  CloudNode node,
+  LongPressStartDetails details,
+);
+
+/// Live grid of a folder's contents — folders shown as folder tiles, files as
+/// thumbnails (or generic icons until the Cloud Function generates a thumbnail).
 class CloudFolderGrid extends StatelessWidget {
   const CloudFolderGrid({
     super.key,
@@ -11,7 +20,7 @@ class CloudFolderGrid extends StatelessWidget {
     required this.folderId,
     this.onFolderTap,
     this.onFileTap,
-    this.onFileLongPress,
+    this.onNodeLongPress,
     this.crossAxisCount = 3,
     this.spacing = 8,
     this.emptyBuilder,
@@ -21,7 +30,10 @@ class CloudFolderGrid extends StatelessWidget {
   final String folderId;
   final void Function(CloudFolder folder)? onFolderTap;
   final void Function(CloudFile file, List<CloudFile> mediaSiblings)? onFileTap;
-  final void Function(CloudNode node)? onFileLongPress;
+
+  /// Fires for both files and folders. [LongPressStartDetails.globalPosition]
+  /// is where the user's finger is — use it to anchor a context menu.
+  final CloudNodeLongPressCallback? onNodeLongPress;
   final int crossAxisCount;
   final double spacing;
   final WidgetBuilder? emptyBuilder;
@@ -62,9 +74,9 @@ class CloudFolderGrid extends StatelessWidget {
                   onFileTap?.call(node, mediaSiblings);
                 }
               },
-              onLongPress: onFileLongPress == null
+              onLongPressStart: onNodeLongPress == null
                   ? null
-                  : () => onFileLongPress!(node),
+                  : (details) => onNodeLongPress!(node, details),
             );
           },
         );
@@ -77,12 +89,15 @@ class _NodeTile extends StatelessWidget {
   const _NodeTile({
     required this.node,
     required this.onTap,
-    required this.onLongPress,
+    required this.onLongPressStart,
   });
 
   final CloudNode node;
   final VoidCallback onTap;
-  final VoidCallback? onLongPress;
+
+  /// Signature matches GestureDetector so we can surface the tap position
+  /// to consumers.
+  final GestureLongPressStartCallback? onLongPressStart;
 
   @override
   Widget build(BuildContext context) {
@@ -90,13 +105,17 @@ class _NodeTile extends StatelessWidget {
       color: Theme.of(context).colorScheme.surfaceContainerHighest,
       borderRadius: BorderRadius.circular(8),
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        onLongPress: onLongPress,
-        child: switch (node) {
-          CloudFolder() => _FolderTile(folder: node as CloudFolder),
-          CloudFile() => _FileTile(file: node as CloudFile),
-        },
+      // InkWell provides the ripple; a GestureDetector wraps it so we can
+      // capture LongPressStartDetails (InkWell.onLongPress is positionless).
+      child: GestureDetector(
+        onLongPressStart: onLongPressStart,
+        child: InkWell(
+          onTap: onTap,
+          child: switch (node) {
+            CloudFolder() => _FolderTile(folder: node as CloudFolder),
+            CloudFile() => _FileTile(file: node as CloudFile),
+          },
+        ),
       ),
     );
   }

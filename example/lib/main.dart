@@ -7,8 +7,10 @@ import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 
 import 'firebase_options.dart';
+import 'folder_picker.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -159,30 +161,8 @@ class _FolderScreenState extends State<FolderScreen> {
                   ),
                 );
               },
-              onFileLongPress: (node) async {
-                final ok = await showDialog<bool>(
-                  context: context,
-                  builder: (_) => AlertDialog(
-                    title: Text('Delete ${node.name}?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Cancel'),
-                      ),
-                      FilledButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        child: const Text('Delete'),
-                      ),
-                    ],
-                  ),
-                );
-                if (ok != true) return;
-                if (node is CloudFile) {
-                  await _storage.deleteFile(node.id);
-                } else if (node is CloudFolder) {
-                  await _storage.deleteFolder(node.id, recursive: true);
-                }
-              },
+              onNodeLongPress: (node, details) =>
+                  _showNodeMenu(node, details.globalPosition),
             ),
           ),
         ],
@@ -252,6 +232,254 @@ class _FolderScreenState extends State<FolderScreen> {
         builder: (_) => _UploadDialog(task: task),
       ),
     );
+  }
+
+  // ── Long-press popup menu + actions ─────────────────────────────────────
+
+  Future<void> _showNodeMenu(CloudNode node, Offset globalPos) async {
+    final overlay =
+        Overlay.of(context).context.findRenderObject()! as RenderBox;
+    final position = RelativeRect.fromRect(
+      Rect.fromPoints(globalPos, globalPos),
+      Offset.zero & overlay.size,
+    );
+
+    final isFile = node is CloudFile;
+    final isMedia = isFile && node.isMedia;
+
+    final choice = await showMenu<String>(
+      context: context,
+      position: position,
+      items: [
+        if (isMedia || node is CloudFolder)
+          const PopupMenuItem(
+            value: 'open',
+            child: ListTile(
+              leading: Icon(Icons.open_in_new),
+              title: Text('Open'),
+            ),
+          ),
+        if (isFile)
+          const PopupMenuItem(
+            value: 'download',
+            child: ListTile(
+              leading: Icon(Icons.download),
+              title: Text('Download'),
+            ),
+          ),
+        const PopupMenuItem(
+          value: 'rename',
+          child: ListTile(
+            leading: Icon(Icons.drive_file_rename_outline),
+            title: Text('Rename'),
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'move',
+          child: ListTile(
+            leading: Icon(Icons.drive_file_move),
+            title: Text('Move to…'),
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'info',
+          child: ListTile(
+            leading: Icon(Icons.info_outline),
+            title: Text('Info'),
+          ),
+        ),
+        const PopupMenuDivider(),
+        const PopupMenuItem(
+          value: 'delete',
+          child: ListTile(
+            leading: Icon(Icons.delete_outline),
+            title: Text('Delete'),
+          ),
+        ),
+      ],
+    );
+
+    if (!mounted || choice == null) return;
+    switch (choice) {
+      case 'open':
+        _openNode(node);
+      case 'download':
+        await _downloadFile(node as CloudFile);
+      case 'rename':
+        await _renameNode(node);
+      case 'move':
+        await _moveNode(node);
+      case 'info':
+        await _showInfo(node);
+      case 'delete':
+        await _deleteNode(node);
+    }
+  }
+
+  void _openNode(CloudNode node) {
+    if (node is CloudFolder) {
+      final chain = _chain;
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => FolderScreen(
+            storage: _storage,
+            folderId: node.id,
+            initialChain: chain == null ? null : <CloudNode>[...chain, node],
+          ),
+        ),
+      );
+      return;
+    }
+    if (node is CloudFile && node.isMedia) {
+      // Reuse the media viewer with just this file for simplicity.
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => Scaffold(
+            appBar: AppBar(title: Text(node.name)),
+            body: CloudMediaViewer(files: [node]),
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _downloadFile(CloudFile file) async {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(SnackBar(content: Text('Downloading ${file.name}…')));
+    try {
+      final localFile = await _storage.download(file.id);
+      await Share.shareXFiles(
+        [XFile(localFile.path, name: file.name)],
+        subject: file.name,
+      );
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('Download failed: $e')));
+    }
+  }
+
+  Future<void> _renameNode(CloudNode node) async {
+    final controller = TextEditingController(text: node.name);
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Rename'),
+        content: TextField(controller: controller, autofocus: true),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            child: const Text('Rename'),
+          ),
+        ],
+      ),
+    );
+    if (newName == null || newName.isEmpty || newName == node.name) return;
+    if (node is CloudFile) {
+      await _storage.renameFile(node.id, newName);
+    } else if (node is CloudFolder) {
+      await _storage.renameFolder(node.id, newName);
+    }
+  }
+
+  Future<void> _moveNode(CloudNode node) async {
+    final target = await pickFolder(
+      context,
+      storage: _storage,
+      // For a folder move, exclude the folder itself (can't be moved into
+      // itself). Descendants are also invalid targets but we don't fully
+      // guard against them here — Firestore would surface the eventual bug.
+      excludeFolderId: node is CloudFolder ? node.id : null,
+    );
+    if (target == null || target == node.parentId) return;
+    if (node is CloudFile) {
+      await _storage.moveFile(node.id, newParentId: target);
+    } else if (node is CloudFolder) {
+      await _storage.moveFolder(node.id, newParentId: target);
+    }
+  }
+
+  Future<void> _showInfo(CloudNode node) async {
+    final rows = <MapEntry<String, String>>[
+      MapEntry('Name', node.name),
+      MapEntry('Type', node is CloudFolder ? 'Folder' : 'File'),
+      MapEntry('Path', node.path.isEmpty ? '/' : node.path),
+      MapEntry('Created', node.createdAt.toLocal().toString()),
+      MapEntry('Updated', node.updatedAt.toLocal().toString()),
+      if (node is CloudFile) MapEntry('MIME', node.mimeType),
+      if (node is CloudFile) MapEntry('Size', _formatBytes(node.sizeBytes)),
+      if (node is CloudFile) MapEntry('Storage path', node.storagePath),
+    ];
+    await showDialog<void>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(node.name),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final e in rows) ...[
+                Text(
+                  e.key,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Text(e.value),
+                const SizedBox(height: 8),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteNode(CloudNode node) async {
+    final isFolder = node is CloudFolder;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text('Delete ${node.name}?'),
+        content: Text(
+          isFolder
+              ? 'This will delete the folder and all its contents. This cannot be undone.'
+              : 'This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    if (node is CloudFile) {
+      await _storage.deleteFile(node.id);
+    } else if (node is CloudFolder) {
+      await _storage.deleteFolder(node.id, recursive: true);
+    }
+  }
+
+  static String _formatBytes(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    if (bytes < 1024 * 1024 * 1024) {
+      return '${(bytes / 1024 / 1024).toStringAsFixed(1)} MB';
+    }
+    return '${(bytes / 1024 / 1024 / 1024).toStringAsFixed(1)} GB';
   }
 }
 
