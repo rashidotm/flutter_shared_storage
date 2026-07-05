@@ -3,21 +3,109 @@ import 'package:flutter/material.dart';
 
 /// Renders a `/foo/bar/baz` style breadcrumb for the current folder, with
 /// each segment tappable.
-class CloudFolderBreadcrumb extends StatelessWidget {
+///
+/// If [chain] is supplied, it's used verbatim — no async work, immediate
+/// render. This is the fast path: parents that already know the ancestor
+/// chain (e.g. because they computed it when navigating into this folder)
+/// should pass it in.
+///
+/// If [chain] is null, the breadcrumb self-loads by walking `parentId` from
+/// [folderId] up to root via [storage.getNode]. Once loaded, the chain is
+/// cached and retained across rebuilds and mid-navigation loads to avoid
+/// flashes of empty space.
+class CloudFolderBreadcrumb extends StatefulWidget {
   const CloudFolderBreadcrumb({
     super.key,
     required this.storage,
     required this.folderId,
     required this.onNavigate,
+    this.chain,
     this.rootLabel = 'Home',
   });
 
   final CloudStorage storage;
   final String folderId;
 
+  /// Pre-computed ancestor chain (root → ... → current). When supplied,
+  /// no fetching happens.
+  final List<CloudNode>? chain;
+
   /// Called with the [CloudFolder] (or a synthetic root) to navigate to.
   final void Function(CloudNode folder) onNavigate;
   final String rootLabel;
+
+  @override
+  State<CloudFolderBreadcrumb> createState() => _CloudFolderBreadcrumbState();
+}
+
+class _CloudFolderBreadcrumbState extends State<CloudFolderBreadcrumb> {
+  /// Last-known chain — retained across rebuilds so we don't flash empty
+  /// while a new chain loads. `null` only before the very first resolve.
+  List<CloudNode>? _chain;
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.chain != null) {
+      _chain = widget.chain;
+    } else {
+      _load();
+    }
+    _scheduleScrollToEnd();
+  }
+
+  @override
+  void didUpdateWidget(CloudFolderBreadcrumb old) {
+    super.didUpdateWidget(old);
+    if (widget.chain != null && !identical(widget.chain, old.chain)) {
+      setState(() => _chain = widget.chain);
+      _scheduleScrollToEnd();
+    } else if (widget.chain == null &&
+        (old.folderId != widget.folderId || old.storage != widget.storage)) {
+      _load();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    final chain = await _ancestorChain();
+    if (!mounted) return;
+    // Guard against a stale response: if folderId changed while we were
+    // fetching, discard the result — a newer _load() is in flight.
+    if (chain.isEmpty || chain.last.id != widget.folderId) return;
+    setState(() => _chain = chain);
+    _scheduleScrollToEnd();
+  }
+
+  /// Nudge the scroll view to reveal the current folder (end of the chain)
+  /// after the next layout. Short chains that fit have maxScrollExtent == 0
+  /// so this is a no-op; long chains snap to their end.
+  void _scheduleScrollToEnd() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollController.hasClients) return;
+      final max = _scrollController.position.maxScrollExtent;
+      if (max > 0) _scrollController.jumpTo(max);
+    });
+  }
+
+  Future<List<CloudNode>> _ancestorChain() async {
+    final root = await widget.storage.getNode(kRootFolderId);
+    if (widget.folderId == kRootFolderId) return [root];
+    final tail = <CloudNode>[];
+    var current = await widget.storage.getNode(widget.folderId);
+    tail.add(current);
+    while (current.parentId.isNotEmpty) {
+      current = await widget.storage.getNode(current.parentId);
+      tail.add(current);
+    }
+    return [root, ...tail.reversed];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,57 +114,54 @@ class CloudFolderBreadcrumb extends StatelessWidget {
     final isRtl = Directionality.of(context) == TextDirection.rtl;
     final chevron = isRtl ? Icons.chevron_left : Icons.chevron_right;
 
-    return FutureBuilder<List<CloudNode>>(
-      future: _ancestorChain(),
-      builder: (context, snap) {
-        if (!snap.hasData) return const SizedBox(height: 32);
-        final chain = snap.data!;
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          child: Row(
-            children: [
-              for (var i = 0; i < chain.length; i++) ...[
-                if (i > 0)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Icon(chevron, size: 18),
-                  ),
-                InkWell(
-                  onTap: () => onNavigate(chain[i]),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 4,
-                    ),
-                    child: Text(
-                      i == 0 ? rootLabel : chain[i].name,
-                      style: TextStyle(
-                        fontWeight: i == chain.length - 1
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                      ),
-                    ),
+    // While the very first load is in flight, show the root label alone —
+    // still meaningful, still tappable, no visible "empty then populated"
+    // pop-in. On subsequent navigations, `_chain` retains the old value
+    // until the new one arrives.
+    final chain = _chain ??
+        <CloudNode>[
+          CloudFolder(
+            id: kRootFolderId,
+            name: '',
+            parentId: '',
+            path: '',
+            createdAt: DateTime.fromMillisecondsSinceEpoch(0),
+            updatedAt: DateTime.fromMillisecondsSinceEpoch(0),
+          ),
+        ];
+
+    return SingleChildScrollView(
+      controller: _scrollController,
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: Row(
+        children: [
+          for (var i = 0; i < chain.length; i++) ...[
+            if (i > 0)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Icon(chevron, size: 18),
+              ),
+            InkWell(
+              onTap: () => widget.onNavigate(chain[i]),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 6,
+                  vertical: 4,
+                ),
+                child: Text(
+                  i == 0 ? widget.rootLabel : chain[i].name,
+                  style: TextStyle(
+                    fontWeight: i == chain.length - 1
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                   ),
                 ),
-              ],
-            ],
-          ),
-        );
-      },
+              ),
+            ),
+          ],
+        ],
+      ),
     );
-  }
-
-  Future<List<CloudNode>> _ancestorChain() async {
-    final chain = <CloudNode>[await storage.getNode(kRootFolderId)];
-    if (folderId == kRootFolderId) return chain;
-    final tail = <CloudNode>[];
-    var current = await storage.getNode(folderId);
-    tail.add(current);
-    while (current.parentId.isNotEmpty) {
-      current = await storage.getNode(current.parentId);
-      tail.add(current);
-    }
-    return chain + tail.reversed.toList();
   }
 }

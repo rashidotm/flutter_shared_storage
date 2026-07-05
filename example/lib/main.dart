@@ -45,13 +45,12 @@ class ExampleApp extends StatelessWidget {
       // route between MaterialApp's Directionality and the route content.
       // In a real app, just set `locale` / rely on the device locale.
       builder: (context, child) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: TextDirection.ltr,
         child: child!,
       ),
       home: FolderScreen(
         storage: storage,
         folderId: kRootFolderId,
-        title: 'Home',
       ),
     );
   }
@@ -62,12 +61,15 @@ class FolderScreen extends StatefulWidget {
     super.key,
     required this.storage,
     required this.folderId,
-    required this.title,
+    this.initialChain,
   });
 
   final CloudStorage storage;
   final String folderId;
-  final String title;
+
+  /// Ancestor chain (root → ... → current). When null, the breadcrumb
+  /// self-loads on first show — used for deep-links / cold start.
+  final List<CloudNode>? initialChain;
 
   @override
   State<FolderScreen> createState() => _FolderScreenState();
@@ -76,40 +78,67 @@ class FolderScreen extends StatefulWidget {
 class _FolderScreenState extends State<FolderScreen> {
   CloudStorage get _storage => widget.storage;
 
+  /// Chain known for THIS screen. Passed down to child screens so their
+  /// breadcrumb renders synchronously without a fetch.
+  late final List<CloudNode>? _chain = widget.initialChain ?? (widget.folderId == kRootFolderId ? <CloudNode>[_syntheticRoot()] : null);
+
+  static CloudFolder _syntheticRoot() => CloudFolder(
+        id: kRootFolderId,
+        name: '',
+        parentId: '',
+        path: '',
+        createdAt: DateTime.fromMillisecondsSinceEpoch(0),
+        updatedAt: DateTime.fromMillisecondsSinceEpoch(0),
+      );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
+      // The breadcrumb replaces the traditional AppBar title — it already
+      // shows the current folder as its last (bold) segment.
+      appBar: AppBar(
+        title: CloudFolderBreadcrumb(
+          storage: _storage,
+          folderId: widget.folderId,
+          chain: _chain,
+          onNavigate: (node) {
+            if (node.id == widget.folderId) return;
+            // Sub-chain up to the tapped ancestor — child renders instantly.
+            List<CloudNode>? childChain;
+            final chain = _chain;
+            if (chain != null) {
+              final idx = chain.indexWhere((n) => n.id == node.id);
+              if (idx >= 0) childChain = chain.sublist(0, idx + 1);
+            }
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute<void>(
+                builder: (_) => FolderScreen(
+                  storage: _storage,
+                  folderId: node.id,
+                  initialChain: childChain,
+                ),
+              ),
+            );
+          },
+        ),
+      ),
       body: Column(
         children: [
-          CloudFolderBreadcrumb(
-            storage: _storage,
-            folderId: widget.folderId,
-            onNavigate: (node) {
-              if (node.id == widget.folderId) return;
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute<void>(
-                  builder: (_) => FolderScreen(
-                    storage: _storage,
-                    folderId: node.id,
-                    title: node.id == kRootFolderId ? 'Home' : node.name,
-                  ),
-                ),
-              );
-            },
-          ),
-          const Divider(height: 1),
           Expanded(
             child: CloudFolderGrid(
               storage: _storage,
               folderId: widget.folderId,
               onFolderTap: (folder) {
+                // Append tapped folder to our known chain — child renders
+                // its breadcrumb without any Firestore round-trip.
+                final chain = _chain;
+                final childChain = chain == null ? null : <CloudNode>[...chain, folder];
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
                     builder: (_) => FolderScreen(
                       storage: _storage,
                       folderId: folder.id,
-                      title: folder.name,
+                      initialChain: childChain,
                     ),
                   ),
                 );
