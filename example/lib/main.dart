@@ -47,7 +47,7 @@ class ExampleApp extends StatelessWidget {
       // route between MaterialApp's Directionality and the route content.
       // In a real app, just set `locale` / rely on the device locale.
       builder: (context, child) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: TextDirection.ltr,
         child: child!,
       ),
       home: FolderScreen(
@@ -167,7 +167,7 @@ class _FolderScreenState extends State<FolderScreen> {
         ],
       ),
       floatingActionButton: Wrap(
-        direction: Axis.vertical,
+        direction: Axis.horizontal,
         spacing: 8,
         children: [
           FloatingActionButton(
