@@ -85,6 +85,10 @@ class CloudGalleryLocalizationsAr extends CloudGalleryLocalizations {
   String get uploadingTitle => 'جارٍ الرفع';
 
   @override
+  String batchUploadingLabel(int completed, int total) =>
+      'اكتمل $completed من $total';
+
+  @override
   String get emptyFolder => 'مجلد فارغ';
   @override
   String gridErrorLabel(Object error) => 'خطأ: $error';

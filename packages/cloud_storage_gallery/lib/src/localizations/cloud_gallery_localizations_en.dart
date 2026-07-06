@@ -86,6 +86,10 @@ class CloudGalleryLocalizationsEn extends CloudGalleryLocalizations {
   String get uploadingTitle => 'Uploading';
 
   @override
+  String batchUploadingLabel(int completed, int total) =>
+      '$completed of $total complete';
+
+  @override
   String get emptyFolder => 'Empty folder';
   @override
   String gridErrorLabel(Object error) => 'Error: $error';

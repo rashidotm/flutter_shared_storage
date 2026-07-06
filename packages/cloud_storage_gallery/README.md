@@ -29,8 +29,8 @@ Ships with:
 - Breadcrumb in the app bar (tap any segment to jump).
 - Grid of subfolders + files, thumbnails when available.
 - Long-press context menu — **Open**, **Download**, **Rename**, **Move to…**, **Info**, **Delete** (last three suppressed when `readOnly`).
-- FABs — **Create folder**, **Upload file** (client-side thumbnails generated automatically for images + videos). Hidden when `readOnly`.
-- Upload progress dialog with a Cancel button; failed/cancelled uploads roll back the Firestore doc.
+- FABs — **Create folder**, **Upload file** (client-side thumbnails generated automatically for images + videos; supports selecting multiple files at once). Hidden when `readOnly`.
+- Upload progress dialog with a Cancel button; failed/cancelled uploads roll back the Firestore doc. For multi-file selections, an aggregate "X of N complete" batch dialog replaces the single-file one.
 
 ## Building blocks
 
@@ -42,6 +42,7 @@ If you want a different UX, compose your own screen from the pieces:
 | `CloudFolderBreadcrumb` | Ancestor-chain breadcrumb. Accepts a pre-computed chain to skip fetching. |
 | `CloudMediaViewer` | Headless, swipeable image/video viewer. You provide the `Scaffold` / `AppBar`. |
 | `CloudUploadDialog` | Progress dialog with an idempotent cancel. |
+| `CloudBatchUploadDialog` | Aggregate "X of N complete" progress dialog for a list of upload tasks. |
 | `pickCloudFolder(...)` | Modal folder picker. Returns the selected folder id. |
 | `generateThumbnails(File)` | JPEG thumb (256w) + preview (1024w) for images + videos. Returns `null` for other MIME types. |
 

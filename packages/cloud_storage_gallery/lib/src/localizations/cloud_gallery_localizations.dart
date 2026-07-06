@@ -122,6 +122,9 @@ abstract class CloudGalleryLocalizations {
 
   String get uploadingTitle;
 
+  /// Aggregate progress label for a batch upload, e.g. "3 of 10 complete".
+  String batchUploadingLabel(int completed, int total);
+
   // ── Grid states ────────────────────────────────────────────────────────
 
   String get emptyFolder;

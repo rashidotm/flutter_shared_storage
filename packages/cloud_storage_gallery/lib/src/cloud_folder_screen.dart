@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
+import 'cloud_batch_upload_dialog.dart';
 import 'cloud_breadcrumb.dart';
 import 'cloud_folder_grid.dart';
 import 'cloud_folder_picker.dart';
@@ -210,38 +211,48 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
   }
 
   Future<void> _uploadFile() async {
-    final result = await FilePicker.platform.pickFiles();
+    final result =
+        await FilePicker.platform.pickFiles(allowMultiple: true);
     if (result == null || result.files.isEmpty) return;
-    final picked = result.files.single;
-    final pathStr = picked.path;
-    if (pathStr == null) return;
 
-    final file = File(pathStr);
+    // Filter out picks without a real filesystem path (some pickers can
+    // hand back streams-only entries).
+    final picked = result.files
+        .where((f) => f.path != null)
+        .toList(growable: false);
+    if (picked.isEmpty) return;
 
-    // Generate thumbnails client-side. Returns null for non-media types
-    // (PDFs, docs, etc.) — those upload without variants.
-    final thumbnails = await generateThumbnails(file);
-
-    final task = _storage.upload(
-      parentId: widget.folderId,
-      name: picked.name,
-      source: FileSource(file),
-      thumbnail: thumbnails == null ? null : BytesSource(thumbnails.thumb),
-      preview: thumbnails == null ? null : BytesSource(thumbnails.preview),
-    );
-
-    // We only use `task.progress` for UI. If the user cancels, `task.result`
-    // completes with an error; without a listener, that becomes an unhandled
-    // zone error and Flutter treats it as a crash. `.ignore()` attaches a
-    // no-op handler so the error is silently absorbed.
-    task.result.ignore();
+    final tasks = <UploadTask>[];
+    for (final entry in picked) {
+      final file = File(entry.path!);
+      // Generate thumbnails client-side. Returns null for non-media types
+      // (PDFs, docs, etc.) — those upload without variants.
+      final thumbnails = await generateThumbnails(file);
+      final task = _storage.upload(
+        parentId: widget.folderId,
+        name: entry.name,
+        source: FileSource(file),
+        thumbnail:
+            thumbnails == null ? null : BytesSource(thumbnails.thumb),
+        preview:
+            thumbnails == null ? null : BytesSource(thumbnails.preview),
+      );
+      // We only use `task.progress` for UI. If a user cancels,
+      // `task.result` completes with an error; without a listener that
+      // becomes an unhandled zone error and Flutter treats it as a
+      // crash. `.ignore()` attaches a no-op handler that absorbs it.
+      task.result.ignore();
+      tasks.add(task);
+    }
 
     if (!mounted) return;
     unawaited(
       showDialog<void>(
         context: context,
         barrierDismissible: false,
-        builder: (_) => CloudUploadDialog(task: task),
+        builder: (_) => tasks.length == 1
+            ? CloudUploadDialog(task: tasks.first)
+            : CloudBatchUploadDialog(tasks: tasks),
       ),
     );
   }
