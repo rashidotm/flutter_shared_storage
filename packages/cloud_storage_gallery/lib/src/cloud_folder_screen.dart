@@ -124,7 +124,12 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
       appBar: _inSelectionMode
           ? _buildSelectionAppBar(l10n)
           : _buildBrowseAppBar(l10n),
-      body: CloudFolderGrid(
+      // SafeArea keeps the grid clear of gesture bars, curved edges, and
+      // any other system-decoration insets. AppBar already covers the top;
+      // requesting `top: false` avoids double padding.
+      body: SafeArea(
+        top: false,
+        child: CloudFolderGrid(
         storage: _storage,
         folderId: widget.folderId,
         onFolderTap: (folder) {
@@ -163,6 +168,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
             _showNodeMenu(node, details.globalPosition),
         selectedNodeIds: _selected.keys.toSet(),
         onNodeToggleSelection: widget.readOnly ? null : _toggleSelection,
+      ),
       ),
       floatingActionButton: (widget.readOnly || _inSelectionMode)
           ? null

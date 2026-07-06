@@ -87,7 +87,11 @@ class _CloudFolderPickerScreenState extends State<_CloudFolderPickerScreen> {
           ),
         ],
       ),
-      body: Column(
+      // SafeArea keeps the picker list clear of the bottom gesture bar
+      // and curved edges. AppBar handles top → `top: false`.
+      body: SafeArea(
+        top: false,
+        child: Column(
         children: [
           CloudFolderBreadcrumb(
             storage: widget.storage,
@@ -129,6 +133,7 @@ class _CloudFolderPickerScreenState extends State<_CloudFolderPickerScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

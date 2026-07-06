@@ -54,15 +54,22 @@ class _CloudMediaViewerState extends State<CloudMediaViewer> {
 
   @override
   Widget build(BuildContext context) {
-    return PageView.builder(
-      controller: _controller,
-      itemCount: widget.files.length,
-      onPageChanged: (i) => widget.onPageChanged?.call(i, widget.files[i]),
-      itemBuilder: (context, i) {
-        final f = widget.files[i];
-        if (f.isVideo) return _VideoPage(file: f);
-        return _ImagePage(file: f);
-      },
+    // SafeArea keeps content (especially Chewie's video controls) above
+    // the bottom gesture bar / on-screen buttons on Android and away from
+    // notches / rounded corners on iOS. The consumer's Scaffold+AppBar
+    // handles the top; we still request `top: true` so this widget stays
+    // correct if consumers use it without an AppBar.
+    return SafeArea(
+      child: PageView.builder(
+        controller: _controller,
+        itemCount: widget.files.length,
+        onPageChanged: (i) => widget.onPageChanged?.call(i, widget.files[i]),
+        itemBuilder: (context, i) {
+          final f = widget.files[i];
+          if (f.isVideo) return _VideoPage(file: f);
+          return _ImagePage(file: f);
+        },
+      ),
     );
   }
 }
