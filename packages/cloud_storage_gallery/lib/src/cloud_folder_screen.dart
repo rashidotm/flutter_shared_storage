@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 
 import 'cloud_batch_upload_dialog.dart';
 import 'cloud_breadcrumb.dart';
+import 'cloud_bulk_progress_dialog.dart';
 import 'cloud_folder_grid.dart';
 import 'cloud_folder_picker.dart';
 import 'cloud_media_viewer.dart';
@@ -604,22 +605,27 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
         ],
       ),
     );
-    if (ok != true) return;
-    for (final node in nodes) {
-      try {
-        if (node is CloudFile) {
-          await _storage.deleteFile(node.id);
-        } else if (node is CloudFolder) {
-          await _storage.deleteFolder(node.id, recursive: true);
-        }
-      } catch (_) {
-        // Best-effort — a single failure shouldn't abort the batch.
-      }
-    }
+    if (ok != true || !mounted) return;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => CloudBulkProgressDialog<CloudNode>(
+        title: l10n.deletingTitle,
+        items: nodes,
+        operation: (node) async {
+          if (node is CloudFile) {
+            await _storage.deleteFile(node.id);
+          } else if (node is CloudFolder) {
+            await _storage.deleteFolder(node.id, recursive: true);
+          }
+        },
+      ),
+    );
     _clearSelection();
   }
 
   Future<void> _bulkMove() async {
+    final l10n = CloudGalleryLocalizations.of(context);
     final nodes = _selected.values.toList(growable: false);
     if (nodes.isEmpty) return;
     // Exclude any selected FOLDER from valid destinations — you can't
@@ -634,19 +640,29 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
       excludeFolderId: firstSelectedFolderId,
       rootLabel: widget.rootLabel,
     );
-    if (target == null) return;
-    for (final node in nodes) {
-      if (node.parentId == target || node.id == target) continue;
-      try {
-        if (node is CloudFile) {
-          await _storage.moveFile(node.id, newParentId: target);
-        } else if (node is CloudFolder) {
-          await _storage.moveFolder(node.id, newParentId: target);
-        }
-      } catch (_) {
-        // best-effort
-      }
+    if (target == null || !mounted) return;
+    final toMove = nodes
+        .where((n) => n.parentId != target && n.id != target)
+        .toList(growable: false);
+    if (toMove.isEmpty) {
+      _clearSelection();
+      return;
     }
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => CloudBulkProgressDialog<CloudNode>(
+        title: l10n.movingTitle,
+        items: toMove,
+        operation: (node) async {
+          if (node is CloudFile) {
+            await _storage.moveFile(node.id, newParentId: target);
+          } else if (node is CloudFolder) {
+            await _storage.moveFolder(node.id, newParentId: target);
+          }
+        },
+      ),
+    );
     _clearSelection();
   }
 

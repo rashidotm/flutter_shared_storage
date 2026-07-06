@@ -90,7 +90,7 @@ class _CloudBatchUploadDialogState extends State<CloudBatchUploadDialog> {
         children: [
           LinearProgressIndicator(value: fraction),
           const SizedBox(height: 8),
-          Text(l10n.batchUploadingLabel(_completed, total)),
+          Text(l10n.bulkProgressLabel(_completed, total)),
         ],
       ),
       actions: [

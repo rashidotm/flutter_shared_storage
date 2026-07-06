@@ -90,9 +90,13 @@ class CloudGalleryLocalizationsAr extends CloudGalleryLocalizations {
 
   @override
   String get uploadingTitle => 'جارٍ الرفع';
+  @override
+  String get deletingTitle => 'جارٍ الحذف';
+  @override
+  String get movingTitle => 'جارٍ النقل';
 
   @override
-  String batchUploadingLabel(int completed, int total) =>
+  String bulkProgressLabel(int completed, int total) =>
       'اكتمل $completed من $total';
 
   @override

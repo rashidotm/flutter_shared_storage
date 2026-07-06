@@ -4,6 +4,7 @@ library cloud_storage_gallery;
 
 export 'src/cloud_batch_upload_dialog.dart';
 export 'src/cloud_breadcrumb.dart';
+export 'src/cloud_bulk_progress_dialog.dart';
 export 'src/cloud_folder_grid.dart';
 export 'src/cloud_folder_picker.dart';
 export 'src/cloud_folder_screen.dart';

@@ -131,8 +131,15 @@ abstract class CloudGalleryLocalizations {
 
   String get uploadingTitle;
 
-  /// Aggregate progress label for a batch upload, e.g. "3 of 10 complete".
-  String batchUploadingLabel(int completed, int total);
+  /// AppBar / dialog title for bulk delete progress.
+  String get deletingTitle;
+
+  /// AppBar / dialog title for bulk move progress.
+  String get movingTitle;
+
+  /// Generic aggregate-progress label, e.g. "3 of 10 complete". Reused
+  /// across upload / delete / move batch dialogs.
+  String bulkProgressLabel(int completed, int total);
 
   // ── Grid states ────────────────────────────────────────────────────────
 
