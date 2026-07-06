@@ -212,6 +212,10 @@ class FirebaseCloudStorage implements CloudStorage {
     required Source? preview,
     required _DeferredUploadTask controller,
   }) async {
+    // Tracks the pre-created Firestore doc so we can roll it back if any
+    // pre-upload step (or the caller's cancel) prevents the actual upload
+    // from ever starting.
+    DocumentReference<Map<String, dynamic>>? createdDoc;
     try {
       _validateName(name);
       final resolvedName = await _resolver.resolve(
@@ -244,6 +248,7 @@ class FirebaseCloudStorage implements CloudStorage {
         kFieldCreatedAt: FieldValue.serverTimestamp(),
         kFieldUpdatedAt: FieldValue.serverTimestamp(),
       });
+      createdDoc = doc;
 
       final metadata = fbs.SettableMetadata(
         contentType: guessedMime,
@@ -297,6 +302,15 @@ class FirebaseCloudStorage implements CloudStorage {
         ),
       );
     } catch (e, st) {
+      // If we got as far as creating a Firestore doc, roll it back so a
+      // pre-bind failure doesn't leave an orphan entry in the folder.
+      if (createdDoc != null) {
+        try {
+          await createdDoc.delete();
+        } catch (_) {
+          // best-effort — ignored
+        }
+      }
       controller._fail(e, st);
     }
   }
@@ -461,6 +475,10 @@ class _DeferredUploadTask implements UploadTask {
   final _progress = StreamController<UploadProgress>.broadcast();
   final _result = Completer<CloudFile>();
 
+  /// True once [cancel] has been called. Used so that a cancel request
+  /// that arrives BEFORE [_bind] still stops the upload once it's bound.
+  bool _cancelRequested = false;
+
   void _bind(UploadTask inner) {
     inner.progress.listen(
       _progress.add,
@@ -471,6 +489,10 @@ class _DeferredUploadTask implements UploadTask {
       if (!_result.isCompleted) _result.completeError(e, st);
     });
     _bound.complete(inner);
+    // If cancel was requested during the pre-bind async setup (name
+    // resolution, doc pre-creation, etc.), the earlier cancel() call was
+    // a no-op — propagate it now that we have an inner task.
+    if (_cancelRequested) unawaited(inner.cancel());
   }
 
   void _fail(Object error, StackTrace st) {
@@ -498,6 +520,7 @@ class _DeferredUploadTask implements UploadTask {
 
   @override
   Future<void> cancel() async {
+    _cancelRequested = true;
     if (_bound.isCompleted) {
       final inner = await _bound.future;
       await inner.cancel();

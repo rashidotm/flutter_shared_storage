@@ -76,6 +76,14 @@ class FirebaseUploadTask implements UploadTask {
         );
         _result.complete(node);
       } catch (e, st) {
+        // Rollback: drop the pre-created Firestore doc so cancelled/failed
+        // uploads don't leave orphaned entries in the folder listing.
+        // Best-effort — swallow any secondary error.
+        try {
+          await _nodeDoc.delete();
+        } catch (_) {
+          // ignored
+        }
         if (!_result.isCompleted) {
           _result.completeError(
             e is CloudStorageException
