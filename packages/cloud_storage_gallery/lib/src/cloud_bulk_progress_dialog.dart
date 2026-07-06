@@ -69,24 +69,33 @@ class _CloudBulkProgressDialogState<T>
   Widget build(BuildContext context) {
     final l10n = CloudGalleryLocalizations.of(context);
     final total = widget.items.length;
+    // Single-item operations don't have a meaningful "X of N" progress
+    // and there's nothing sensible to cancel once the one op has started,
+    // so show an indeterminate bar without a count / cancel button.
+    final isSingle = total == 1;
     final fraction = total == 0 ? 0.0 : _done / total;
     return AlertDialog(
       title: Text(widget.title),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          LinearProgressIndicator(value: fraction),
-          const SizedBox(height: 8),
-          Text(l10n.bulkProgressLabel(_done, total)),
+          LinearProgressIndicator(value: isSingle ? null : fraction),
+          if (!isSingle) ...[
+            const SizedBox(height: 8),
+            Text(l10n.bulkProgressLabel(_done, total)),
+          ],
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed:
-              _cancelled ? null : () => setState(() => _cancelled = true),
-          child: Text(widget.cancelLabel ?? l10n.buttonCancel),
-        ),
-      ],
+      actions: isSingle
+          ? null
+          : [
+              TextButton(
+                onPressed: _cancelled
+                    ? null
+                    : () => setState(() => _cancelled = true),
+                child: Text(widget.cancelLabel ?? l10n.buttonCancel),
+              ),
+            ],
     );
   }
 }

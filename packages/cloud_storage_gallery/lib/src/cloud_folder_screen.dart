@@ -490,6 +490,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
   }
 
   Future<void> _moveNode(CloudNode node) async {
+    final l10n = CloudGalleryLocalizations.of(context);
     final target = await pickCloudFolder(
       context,
       storage: _storage,
@@ -499,12 +500,22 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
       excludeFolderId: node is CloudFolder ? node.id : null,
       rootLabel: widget.rootLabel,
     );
-    if (target == null || target == node.parentId) return;
-    if (node is CloudFile) {
-      await _storage.moveFile(node.id, newParentId: target);
-    } else if (node is CloudFolder) {
-      await _storage.moveFolder(node.id, newParentId: target);
-    }
+    if (target == null || target == node.parentId || !mounted) return;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => CloudBulkProgressDialog<CloudNode>(
+        title: l10n.movingTitle,
+        items: [node],
+        operation: (n) async {
+          if (n is CloudFile) {
+            await _storage.moveFile(n.id, newParentId: target);
+          } else if (n is CloudFolder) {
+            await _storage.moveFolder(n.id, newParentId: target);
+          }
+        },
+      ),
+    );
   }
 
   Future<void> _showInfo(CloudNode node) async {
@@ -574,12 +585,22 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
         ],
       ),
     );
-    if (ok != true) return;
-    if (node is CloudFile) {
-      await _storage.deleteFile(node.id);
-    } else if (node is CloudFolder) {
-      await _storage.deleteFolder(node.id, recursive: true);
-    }
+    if (ok != true || !mounted) return;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => CloudBulkProgressDialog<CloudNode>(
+        title: l10n.deletingTitle,
+        items: [node],
+        operation: (n) async {
+          if (n is CloudFile) {
+            await _storage.deleteFile(n.id);
+          } else if (n is CloudFolder) {
+            await _storage.deleteFolder(n.id, recursive: true);
+          }
+        },
+      ),
+    );
   }
 
   // ── Bulk actions (selection mode) ──────────────────────────────────────
