@@ -1,56 +1,40 @@
 # cloud_storage_gallery
 
-Optional widgets for browsing folders and viewing media from `cloud_storage`.
+Ready-made widgets for browsing folders, viewing media, uploading with progress, and generating thumbnails on top of [`cloud_storage`](../cloud_storage).
 
-All widgets are headless (no `Scaffold` / `AppBar`) — you own the surrounding chrome. Everything inherits from the app's `Theme` and respects `Directionality.of(context)` for RTL/LTR.
+Everything inherits from the host app's `Theme` and respects `Directionality.of(context)` for RTL/LTR.
 
-## Grid + navigation
+## Fast path — `CloudFolderScreen`
 
-```dart
-CloudFolderGrid(
-  storage: storage,
-  folderId: currentFolderId,
-  onFolderTap: (f) => Navigator.push(...),
-  onFileTap: (file, mediaSiblings) {
-    if (file.isMedia) {
-      Navigator.push(context, MaterialPageRoute(
-        builder: (_) => Scaffold(
-          appBar: AppBar(title: Text(file.name)),
-          body: CloudMediaViewer(
-            files: mediaSiblings,
-            initialIndex: mediaSiblings.indexOf(file),
-          ),
-        ),
-      ));
-    }
-  },
-)
-```
-
-## Media viewer
-
-`CloudMediaViewer` returns just the swipeable `PageView` of images/videos. You supply the `Scaffold` and any app bar. Wrapping in a `Scaffold` with an `AppBar` gives you the platform back button automatically. If you want the title to update as the user swipes, listen to `onPageChanged`:
+Drop-in file browser with every action wired up. This is what the example app uses:
 
 ```dart
-class _ViewerScreen extends StatefulWidget { /* ... */ }
-
-class _ViewerScreenState extends State<_ViewerScreen> {
-  late CloudFile current = widget.files[widget.initialIndex];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(current.name)),
-      body: CloudMediaViewer(
-        files: widget.files,
-        initialIndex: widget.initialIndex,
-        onPageChanged: (i, file) => setState(() => current = file),
-      ),
-    );
-  }
-}
+MaterialApp(
+  home: CloudFolderScreen(storage: myCloudStorage),
+);
 ```
+
+Ships with:
+
+- Breadcrumb in the app bar (tap any segment to jump).
+- Grid of subfolders + files, thumbnails when available.
+- Long-press context menu — **Open**, **Download**, **Rename**, **Move to…**, **Info**, **Delete**.
+- FABs — **Create folder**, **Upload file** (client-side thumbnails generated automatically for images + videos).
+- Upload progress dialog with a Cancel button; failed/cancelled uploads roll back the Firestore doc.
+
+## Building blocks
+
+If you want a different UX, compose your own screen from the pieces:
+
+| Widget / helper | Purpose |
+|---|---|
+| `CloudFolderGrid` | Live grid of a folder's contents. Tap and long-press callbacks. |
+| `CloudFolderBreadcrumb` | Ancestor-chain breadcrumb. Accepts a pre-computed chain to skip fetching. |
+| `CloudMediaViewer` | Headless, swipeable image/video viewer. You provide the `Scaffold` / `AppBar`. |
+| `CloudUploadDialog` | Progress dialog with an idempotent cancel. |
+| `pickCloudFolder(...)` | Modal folder picker. Returns the selected folder id. |
+| `generateThumbnails(File)` | JPEG thumb (256w) + preview (1024w) for images + videos. Returns `null` for other MIME types. |
 
 ## Dependencies
 
-Pulls in `photo_view`, `video_player`, `chewie`, `cached_network_image`. If you don't want those dependencies, just don't depend on this package — `cloud_storage` itself is headless.
+Pulls in `cached_network_image`, `photo_view`, `video_player`, `chewie`, `file_picker`, `share_plus`, `image`, `video_thumbnail`, `mime`, `path`, `path_provider`. If any of these are unwanted, either fork the widgets or depend only on `cloud_storage` and build your own UI.

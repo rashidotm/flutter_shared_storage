@@ -20,8 +20,11 @@ class MediaThumbnails {
 
 /// Generates a thumb (256w) and preview (1024w) JPEG for [file] if the
 /// MIME type is a supported image or video. Returns `null` for unsupported
-/// types (PDFs, docs, etc.) — the caller uploads such files without variants.
-Future<MediaThumbnails?> generateThumbnails(File file, {String? mimeType}) async {
+/// types (PDFs, docs, etc.) — pass those to `upload()` without variants.
+Future<MediaThumbnails?> generateThumbnails(
+  File file, {
+  String? mimeType,
+}) async {
   final mime = mimeType ?? lookupMimeType(file.path) ?? '';
   if (mime.startsWith('image/')) {
     return _fromImageBytes(await file.readAsBytes());
@@ -53,18 +56,22 @@ Future<MediaThumbnails?> _fromVideoFile(File file) async {
   final tmpDir = await getTemporaryDirectory();
   final framePath = p.join(
     tmpDir.path,
-    'thumb-${DateTime.fromMillisecondsSinceEpoch(0).millisecondsSinceEpoch}-${p.basenameWithoutExtension(file.path)}.jpg',
+    'thumb-${p.basenameWithoutExtension(file.path)}.jpg',
   );
   final resultPath = await VideoThumbnail.thumbnailFile(
     video: file.path,
     thumbnailPath: framePath,
     imageFormat: ImageFormat.JPEG,
-    maxWidth: 1024, // request a frame no wider than 1024 to keep it snappy
+    maxWidth: 1024,
     quality: 85,
   );
   if (resultPath == null) return null;
   final frameBytes = await File(resultPath).readAsBytes();
-  await File(resultPath).delete().catchError((_) => File(resultPath));
+  try {
+    await File(resultPath).delete();
+  } catch (_) {
+    // ignored — leaking a tempfile is fine
+  }
   final decoded = img.decodeImage(frameBytes);
   if (decoded == null) return null;
   return MediaThumbnails(

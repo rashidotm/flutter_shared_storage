@@ -1,52 +1,67 @@
-import 'package:cloud_storage/cloud_storage.dart';
-import 'package:cloud_storage_gallery/cloud_storage_gallery.dart';
+import 'package:cloud_storage_platform_interface/cloud_storage_platform_interface.dart';
 import 'package:flutter/material.dart';
+
+import 'cloud_breadcrumb.dart';
 
 /// Presents a modal that lets the user navigate the folder tree and pick a
 /// destination folder. Returns the selected folder's id, or `null` if the
 /// user cancelled.
 ///
-/// [excludeFolderId] hides one folder from the list — useful when moving a
-/// folder, since you can't move a folder into itself or its descendants.
-Future<String?> pickFolder(
+/// [excludeFolderId] hides one folder from the list — pass the source
+/// folder's id when moving a folder, since you can't move it into itself.
+/// (Descendants of that folder are still shown; the caller should surface
+/// any resulting error.)
+Future<String?> pickCloudFolder(
   BuildContext context, {
   required CloudStorage storage,
   String? excludeFolderId,
   String startFolderId = kRootFolderId,
+  String title = 'Move to…',
+  String moveHereLabel = 'Move here',
+  String rootLabel = 'Home',
 }) {
   return Navigator.of(context).push<String>(
     MaterialPageRoute(
-      builder: (_) => _FolderPickerScreen(
+      builder: (_) => _CloudFolderPickerScreen(
         storage: storage,
         startFolderId: startFolderId,
         excludeFolderId: excludeFolderId,
+        title: title,
+        moveHereLabel: moveHereLabel,
+        rootLabel: rootLabel,
       ),
       fullscreenDialog: true,
     ),
   );
 }
 
-class _FolderPickerScreen extends StatefulWidget {
-  const _FolderPickerScreen({
+class _CloudFolderPickerScreen extends StatefulWidget {
+  const _CloudFolderPickerScreen({
     required this.storage,
     required this.startFolderId,
     required this.excludeFolderId,
+    required this.title,
+    required this.moveHereLabel,
+    required this.rootLabel,
   });
 
   final CloudStorage storage;
   final String startFolderId;
   final String? excludeFolderId;
+  final String title;
+  final String moveHereLabel;
+  final String rootLabel;
 
   @override
-  State<_FolderPickerScreen> createState() => _FolderPickerScreenState();
+  State<_CloudFolderPickerScreen> createState() =>
+      _CloudFolderPickerScreenState();
 }
 
-class _FolderPickerScreenState extends State<_FolderPickerScreen> {
-  // Current folder shown in the picker. Navigation within the picker is
-  // internal state — no extra Navigator routes get pushed. This keeps the
-  // outer `pickFolder(...)` Future waiting on the SINGLE route that
-  // Navigator.push added, and popping THIS screen with a value cleanly
-  // resolves that Future regardless of how deep the user has navigated.
+class _CloudFolderPickerScreenState extends State<_CloudFolderPickerScreen> {
+  // Navigation is internal state — no extra Navigator routes get pushed.
+  // The outer `pickCloudFolder(...)` Future waits on the SINGLE route the
+  // caller pushed, so popping THIS screen with a value cleanly resolves
+  // that Future regardless of how deep the user has navigated.
   late String _currentFolderId = widget.startFolderId;
 
   void _navigateTo(String folderId) {
@@ -58,11 +73,11 @@ class _FolderPickerScreenState extends State<_FolderPickerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Move to…'),
+        title: Text(widget.title),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(_currentFolderId),
-            child: const Text('Move here'),
+            child: Text(widget.moveHereLabel),
           ),
         ],
       ),
@@ -71,14 +86,12 @@ class _FolderPickerScreenState extends State<_FolderPickerScreen> {
           CloudFolderBreadcrumb(
             storage: widget.storage,
             folderId: _currentFolderId,
+            rootLabel: widget.rootLabel,
             onNavigate: (node) => _navigateTo(node.id),
           ),
           const Divider(height: 1),
           Expanded(
             child: StreamBuilder<List<CloudNode>>(
-              // Key ensures the StreamBuilder rebuilds its subscription when
-              // we navigate — otherwise the old folder's data would still be
-              // visible on the first frame after setState.
               key: ValueKey(_currentFolderId),
               stream: widget.storage.watchFolder(_currentFolderId),
               builder: (context, snap) {
@@ -90,10 +103,8 @@ class _FolderPickerScreenState extends State<_FolderPickerScreen> {
                     .where((f) => f.id != widget.excludeFolderId)
                     .toList();
                 if (folders.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      'No subfolders. Tap "Move here" to pick this one.',
-                    ),
+                  return Center(
+                    child: Text('No subfolders. Tap "${widget.moveHereLabel}" to pick this one.'),
                   );
                 }
                 return ListView.builder(
