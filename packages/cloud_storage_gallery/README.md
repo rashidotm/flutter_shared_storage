@@ -14,12 +14,20 @@ MaterialApp(
 );
 ```
 
+For viewer-only users, set `readOnly: true`:
+
+```dart
+CloudFolderScreen(storage: myCloudStorage, readOnly: true),
+```
+
+In read-only mode both FABs are hidden and the long-press menu drops **Rename**, **Move to…**, and **Delete**. **Open**, **Download**, and **Info** stay. The flag is a UI concern only — pair it with Firestore/Storage security rules if you need actual protection.
+
 Ships with:
 
 - Breadcrumb in the app bar (tap any segment to jump).
 - Grid of subfolders + files, thumbnails when available.
-- Long-press context menu — **Open**, **Download**, **Rename**, **Move to…**, **Info**, **Delete**.
-- FABs — **Create folder**, **Upload file** (client-side thumbnails generated automatically for images + videos).
+- Long-press context menu — **Open**, **Download**, **Rename**, **Move to…**, **Info**, **Delete** (last three suppressed when `readOnly`).
+- FABs — **Create folder**, **Upload file** (client-side thumbnails generated automatically for images + videos). Hidden when `readOnly`.
 - Upload progress dialog with a Cancel button; failed/cancelled uploads roll back the Firestore doc.
 
 ## Building blocks

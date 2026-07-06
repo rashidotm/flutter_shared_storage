@@ -36,6 +36,7 @@ class CloudFolderScreen extends StatefulWidget {
     this.folderId = kRootFolderId,
     this.initialChain,
     this.rootLabel = 'Home',
+    this.readOnly = false,
   });
 
   final CloudStorage storage;
@@ -47,6 +48,18 @@ class CloudFolderScreen extends StatefulWidget {
 
   /// Label shown for the root folder in breadcrumbs.
   final String rootLabel;
+
+  /// When true, hides the write-oriented UI:
+  ///
+  /// * Both floating action buttons (Create folder, Upload file).
+  /// * The mutation entries in the long-press popup menu — Rename,
+  ///   Move to…, Delete.
+  ///
+  /// Read-only actions (Open, Download, Info) remain available. Use this
+  /// to distinguish viewer users from editor users. Access is NOT enforced
+  /// client-side — pair with Firestore/Storage security rules if you rely
+  /// on it for protection.
+  final bool readOnly;
 
   @override
   State<CloudFolderScreen> createState() => _CloudFolderScreenState();
@@ -98,6 +111,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
                   folderId: node.id,
                   initialChain: childChain,
                   rootLabel: widget.rootLabel,
+                  readOnly: widget.readOnly,
                 ),
               ),
             );
@@ -120,6 +134,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
                 folderId: folder.id,
                 initialChain: childChain,
                 rootLabel: widget.rootLabel,
+                readOnly: widget.readOnly,
               ),
             ),
           );
@@ -141,24 +156,26 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
         onNodeLongPress: (node, details) =>
             _showNodeMenu(node, details.globalPosition),
       ),
-      floatingActionButton: Wrap(
-        direction: Axis.horizontal,
-        spacing: 8,
-        children: [
-          FloatingActionButton(
-            heroTag: 'newFolder',
-            tooltip: 'Create folder',
-            onPressed: _createFolder,
-            child: const Icon(Icons.create_new_folder),
-          ),
-          FloatingActionButton(
-            heroTag: 'upload',
-            tooltip: 'Upload file',
-            onPressed: _uploadFile,
-            child: const Icon(Icons.note_add_outlined),
-          ),
-        ],
-      ),
+      floatingActionButton: widget.readOnly
+          ? null
+          : Wrap(
+              direction: Axis.horizontal,
+              spacing: 8,
+              children: [
+                FloatingActionButton(
+                  heroTag: 'newFolder',
+                  tooltip: 'Create folder',
+                  onPressed: _createFolder,
+                  child: const Icon(Icons.create_new_folder),
+                ),
+                FloatingActionButton(
+                  heroTag: 'upload',
+                  tooltip: 'Upload file',
+                  onPressed: _uploadFile,
+                  child: const Icon(Icons.note_add_outlined),
+                ),
+              ],
+            ),
     );
   }
 
@@ -237,6 +254,8 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
     final isFile = node is CloudFile;
     final isMedia = isFile && node.isMedia;
 
+    final canMutate = !widget.readOnly;
+
     final choice = await showMenu<String>(
       context: context,
       position: position,
@@ -257,20 +276,22 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
               title: Text('Download'),
             ),
           ),
-        const PopupMenuItem(
-          value: 'rename',
-          child: ListTile(
-            leading: Icon(Icons.drive_file_rename_outline),
-            title: Text('Rename'),
+        if (canMutate)
+          const PopupMenuItem(
+            value: 'rename',
+            child: ListTile(
+              leading: Icon(Icons.drive_file_rename_outline),
+              title: Text('Rename'),
+            ),
           ),
-        ),
-        const PopupMenuItem(
-          value: 'move',
-          child: ListTile(
-            leading: Icon(Icons.drive_file_move),
-            title: Text('Move to…'),
+        if (canMutate)
+          const PopupMenuItem(
+            value: 'move',
+            child: ListTile(
+              leading: Icon(Icons.drive_file_move),
+              title: Text('Move to…'),
+            ),
           ),
-        ),
         const PopupMenuItem(
           value: 'info',
           child: ListTile(
@@ -278,14 +299,15 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
             title: Text('Info'),
           ),
         ),
-        const PopupMenuDivider(),
-        const PopupMenuItem(
-          value: 'delete',
-          child: ListTile(
-            leading: Icon(Icons.delete_outline),
-            title: Text('Delete'),
+        if (canMutate) const PopupMenuDivider(),
+        if (canMutate)
+          const PopupMenuItem(
+            value: 'delete',
+            child: ListTile(
+              leading: Icon(Icons.delete_outline),
+              title: Text('Delete'),
+            ),
           ),
-        ),
       ],
     );
 
@@ -316,6 +338,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
             folderId: node.id,
             initialChain: chain == null ? null : <CloudNode>[...chain, node],
             rootLabel: widget.rootLabel,
+            readOnly: widget.readOnly,
           ),
         ),
       );
