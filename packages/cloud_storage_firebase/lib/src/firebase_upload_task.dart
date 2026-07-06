@@ -29,11 +29,23 @@ class FirebaseUploadTask implements UploadTask {
   void _wire() {
     _storageTask.snapshotEvents.listen(
       (snap) {
+        // When the underlying storage task reports success we're NOT
+        // actually done — the onSuccess block below still has to upload
+        // thumbnail + preview variants (if any) and commit URLs to
+        // Firestore. Mask that state as `running` with an indeterminate
+        // total so the progress stream stays non-terminal until every
+        // piece of work is finished. The real terminal success event is
+        // emitted after onSuccess resolves.
+        final storageDone = snap.state == fbs.TaskState.success;
         _progress.add(
           UploadProgress(
             bytesTransferred: snap.bytesTransferred,
-            totalBytes: snap.totalBytes <= 0 ? null : snap.totalBytes,
-            status: _statusFor(snap.state),
+            totalBytes: storageDone
+                ? null
+                : (snap.totalBytes <= 0 ? null : snap.totalBytes),
+            status: storageDone
+                ? UploadStatus.running
+                : _statusFor(snap.state),
           ),
         );
       },
@@ -84,6 +96,19 @@ class FirebaseUploadTask implements UploadTask {
         } catch (_) {
           // ignored
         }
+        // Emit a terminal error to the progress stream so any listening
+        // dialog can pop. Without this, if the storage task succeeded
+        // but onSuccess (thumbnail uploads / Firestore update) threw,
+        // no terminal event would fire — because our snapshot listener
+        // masks storage success as `running` — and the UI would hang.
+        _progress.add(
+          UploadProgress(
+            bytesTransferred: 0,
+            totalBytes: null,
+            status: UploadStatus.error,
+            error: e,
+          ),
+        );
         if (!_result.isCompleted) {
           _result.completeError(
             e is CloudStorageException
