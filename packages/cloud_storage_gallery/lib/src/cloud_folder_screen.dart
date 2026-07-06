@@ -154,12 +154,9 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
           if (!file.isMedia) return;
           Navigator.of(context).push(
             MaterialPageRoute<void>(
-              builder: (_) => Scaffold(
-                appBar: AppBar(title: Text(file.name)),
-                body: CloudMediaViewer(
-                  files: mediaSiblings,
-                  initialIndex: mediaSiblings.indexOf(file),
-                ),
+              builder: (_) => _MediaViewerScaffold(
+                files: mediaSiblings,
+                initialIndex: mediaSiblings.indexOf(file),
               ),
             ),
           );
@@ -449,9 +446,9 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
     if (node is CloudFile && node.isMedia) {
       Navigator.of(context).push(
         MaterialPageRoute<void>(
-          builder: (_) => Scaffold(
-            appBar: AppBar(title: Text(node.name)),
-            body: CloudMediaViewer(files: [node]),
+          builder: (_) => _MediaViewerScaffold(
+            files: [node],
+            initialIndex: 0,
           ),
         ),
       );
@@ -743,5 +740,38 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
       return '${(bytes / 1024 / 1024).toStringAsFixed(1)} ${l10n.unitMegabytes}';
     }
     return '${(bytes / 1024 / 1024 / 1024).toStringAsFixed(1)} ${l10n.unitGigabytes}';
+  }
+}
+
+/// Scaffold + AppBar wrapper for [CloudMediaViewer] that keeps its title
+/// in sync with the currently-visible file as the user swipes.
+class _MediaViewerScaffold extends StatefulWidget {
+  const _MediaViewerScaffold({
+    required this.files,
+    required this.initialIndex,
+  });
+
+  final List<CloudFile> files;
+  final int initialIndex;
+
+  @override
+  State<_MediaViewerScaffold> createState() => _MediaViewerScaffoldState();
+}
+
+class _MediaViewerScaffoldState extends State<_MediaViewerScaffold> {
+  late CloudFile _current = widget.files[widget.initialIndex];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_current.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+      ),
+      body: CloudMediaViewer(
+        files: widget.files,
+        initialIndex: widget.initialIndex,
+        onPageChanged: (i, file) => setState(() => _current = file),
+      ),
+    );
   }
 }
