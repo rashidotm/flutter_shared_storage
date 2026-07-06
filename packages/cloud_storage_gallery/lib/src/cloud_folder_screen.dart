@@ -366,6 +366,14 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
               title: Text(l10n.menuDownload),
             ),
           ),
+        if (isFile && canMutate)
+          PopupMenuItem(
+            value: 'thumbnail',
+            child: ListTile(
+              leading: const Icon(Icons.image_outlined),
+              title: Text(l10n.menuSetThumbnail),
+            ),
+          ),
         if (canMutate)
           PopupMenuItem(
             value: 'rename',
@@ -409,6 +417,8 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
         _openNode(node);
       case 'download':
         await _downloadFile(node as CloudFile);
+      case 'thumbnail':
+        await _setThumbnail(node as CloudFile);
       case 'rename':
         await _renameNode(node);
       case 'move':
@@ -465,6 +475,37 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
         SnackBar(content: Text(l10n.downloadFailedSnack(e))),
       );
     }
+  }
+
+  Future<void> _setThumbnail(CloudFile file) async {
+    final l10n = CloudGalleryLocalizations.of(context);
+    final result = await FilePicker.platform.pickFiles(type: FileType.image);
+    if (result == null || result.files.isEmpty) return;
+    final pathStr = result.files.single.path;
+    if (pathStr == null) return;
+
+    // Resize the picked image into thumb (256w) + preview (1024w) JPEGs.
+    // generateThumbnails returns null for non-image sources — but the
+    // FilePicker restriction above guarantees an image was chosen.
+    final imageFile = File(pathStr);
+    final thumbnails = await generateThumbnails(imageFile);
+    if (thumbnails == null || !mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => CloudBulkProgressDialog<CloudFile>(
+        title: l10n.uploadingTitle,
+        items: [file],
+        operation: (f) async {
+          await _storage.setThumbnail(
+            f.id,
+            thumbnail: BytesSource(thumbnails.thumb),
+            preview: BytesSource(thumbnails.preview),
+          );
+        },
+      ),
+    );
   }
 
   Future<void> _renameNode(CloudNode node) async {

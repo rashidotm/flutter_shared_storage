@@ -77,4 +77,22 @@ abstract class CloudStorage {
   Future<void> renameFile(String fileId, String newName);
 
   Future<void> moveFile(String fileId, {required String newParentId});
+
+  /// Attaches or replaces a custom thumbnail (and optionally a preview)
+  /// for an existing file. Useful for files that don't have a
+  /// content-derived thumbnail — PDFs, docs, etc. — or to override a bad
+  /// auto-generated one.
+  ///
+  /// Both sources should be **JPEG** bytes/files. The backend writes them
+  /// to the well-known variant paths and updates the file's
+  /// `thumbnailUrl` / `previewUrl`. Existing variants at those paths are
+  /// overwritten.
+  ///
+  /// When the file is later deleted via [deleteFile], the variants are
+  /// removed alongside it automatically.
+  Future<void> setThumbnail(
+    String fileId, {
+    required Source thumbnail,
+    Source? preview,
+  });
 }

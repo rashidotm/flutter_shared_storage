@@ -69,6 +69,7 @@ abstract class CloudGalleryLocalizations {
   String get menuInfo;
   String get menuDelete;
   String get menuSelect;
+  String get menuSetThumbnail;
 
   // ── Selection mode ─────────────────────────────────────────────────────
 

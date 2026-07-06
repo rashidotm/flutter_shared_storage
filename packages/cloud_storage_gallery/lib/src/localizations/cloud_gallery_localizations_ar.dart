@@ -26,6 +26,8 @@ class CloudGalleryLocalizationsAr extends CloudGalleryLocalizations {
   String get menuDelete => 'حذف';
   @override
   String get menuSelect => 'تحديد';
+  @override
+  String get menuSetThumbnail => 'تعيين صورة مصغّرة';
 
   @override
   String selectionCountLabel(int count) => 'تم تحديد $count';

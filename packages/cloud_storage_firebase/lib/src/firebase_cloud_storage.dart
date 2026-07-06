@@ -400,6 +400,40 @@ class FirebaseCloudStorage implements CloudStorage {
   Future<void> moveFile(String fileId, {required String newParentId}) =>
       _moveNode(fileId, newParentId);
 
+  @override
+  Future<void> setThumbnail(
+    String fileId, {
+    required Source thumbnail,
+    Source? preview,
+  }) async {
+    final node = await getNode(fileId);
+    if (node is! CloudFile) {
+      throw const InvalidArgumentException('Node is a folder, not a file');
+    }
+
+    final thumbUrl = await _uploadVariant(
+      source: thumbnail,
+      path: thumbPathFor(_storageRoot, fileId),
+    );
+    if (thumbUrl == null) {
+      throw const UploadFailedException('Thumbnail upload failed');
+    }
+
+    String? previewUrl;
+    if (preview != null) {
+      previewUrl = await _uploadVariant(
+        source: preview,
+        path: previewPathFor(_storageRoot, fileId),
+      );
+    }
+
+    await _nodes.doc(fileId).update(<String, Object?>{
+      kFieldThumbnailUrl: thumbUrl,
+      if (previewUrl != null) kFieldPreviewUrl: previewUrl,
+      kFieldUpdatedAt: FieldValue.serverTimestamp(),
+    });
+  }
+
   // ── Shared rename/move ────────────────────────────────────────────────────
 
   Future<void> _renameNode(String nodeId, String newName) async {
