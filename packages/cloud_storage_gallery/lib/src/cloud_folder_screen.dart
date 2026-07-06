@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:cloud_storage_platform_interface/cloud_storage_platform_interface.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'cloud_batch_upload_dialog.dart';
@@ -151,15 +152,19 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
           );
         },
         onFileTap: (file, mediaSiblings) {
-          if (!file.isMedia) return;
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => _MediaViewerScaffold(
-                files: mediaSiblings,
-                initialIndex: mediaSiblings.indexOf(file),
+          if (file.isMedia) {
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => _MediaViewerScaffold(
+                  files: mediaSiblings,
+                  initialIndex: mediaSiblings.indexOf(file),
+                ),
               ),
-            ),
-          );
+            );
+            return;
+          }
+          // Non-media (PDF, docs, etc.): download + hand off to the OS.
+          _openFileExternally(file);
         },
         onNodeLongPress: (node, details) =>
             _showNodeMenu(node, details.globalPosition),
@@ -453,6 +458,38 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
         ),
       );
     }
+  }
+
+  /// Downloads [file] to the local cache and hands it off to the OS
+  /// default handler via `open_filex`. If no compatible app is installed
+  /// (or the platform can't route directly), falls back to the OS share
+  /// sheet so the user can pick a target app themselves.
+  Future<void> _openFileExternally(CloudFile file) async {
+    final l10n = CloudGalleryLocalizations.of(context);
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => CloudBulkProgressDialog<CloudFile>(
+        title: l10n.openingTitle,
+        items: [file],
+        operation: (f) async {
+          final localFile = await _storage.download(f.id);
+          final result = await OpenFilex.open(
+            localFile.path,
+            type: f.mimeType.isEmpty ? null : f.mimeType,
+          );
+          if (result.type != ResultType.done) {
+            // Fallback: hand the file to the OS share sheet so the user
+            // can pick an app. Also gracefully handles the "no app
+            // installed" case reported by open_filex on some devices.
+            await Share.shareXFiles(
+              [XFile(localFile.path, name: f.name)],
+              subject: f.name,
+            );
+          }
+        },
+      ),
+    );
   }
 
   Future<void> _downloadFile(CloudFile file) async {

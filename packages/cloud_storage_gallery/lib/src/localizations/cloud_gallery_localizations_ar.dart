@@ -96,6 +96,8 @@ class CloudGalleryLocalizationsAr extends CloudGalleryLocalizations {
   String get deletingTitle => 'جارٍ الحذف';
   @override
   String get movingTitle => 'جارٍ النقل';
+  @override
+  String get openingTitle => 'جارٍ الفتح';
 
   @override
   String bulkProgressLabel(int completed, int total) =>

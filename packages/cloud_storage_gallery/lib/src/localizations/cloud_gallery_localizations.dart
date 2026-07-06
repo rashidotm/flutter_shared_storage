@@ -138,6 +138,10 @@ abstract class CloudGalleryLocalizations {
   /// AppBar / dialog title for bulk move progress.
   String get movingTitle;
 
+  /// Dialog title while a file is being downloaded before being handed off
+  /// to the OS default handler.
+  String get openingTitle;
+
   /// Generic aggregate-progress label, e.g. "3 of 10 complete". Reused
   /// across upload / delete / move batch dialogs.
   String bulkProgressLabel(int completed, int total);

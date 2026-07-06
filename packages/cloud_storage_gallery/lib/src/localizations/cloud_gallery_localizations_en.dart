@@ -97,6 +97,8 @@ class CloudGalleryLocalizationsEn extends CloudGalleryLocalizations {
   String get deletingTitle => 'Deleting';
   @override
   String get movingTitle => 'Moving';
+  @override
+  String get openingTitle => 'Opening';
 
   @override
   String bulkProgressLabel(int completed, int total) =>

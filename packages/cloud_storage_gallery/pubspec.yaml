@@ -19,6 +19,7 @@ dependencies:
   # Full-featured folder browser deps:
   file_picker: ^8.1.2
   share_plus: ^10.1.2
+  open_filex: ^4.5.0
   image: ^4.3.0
   video_thumbnail: ^0.5.3
   mime: ^1.0.6
