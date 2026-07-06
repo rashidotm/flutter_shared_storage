@@ -25,6 +25,13 @@ class CloudGalleryLocalizationsEn extends CloudGalleryLocalizations {
   String get menuInfo => 'Info';
   @override
   String get menuDelete => 'Delete';
+  @override
+  String get menuSelect => 'Select';
+
+  @override
+  String selectionCountLabel(int count) => '$count selected';
+  @override
+  String deleteMultipleTitle(int count) => 'Delete $count items?';
 
   @override
   String get buttonCancel => 'Cancel';

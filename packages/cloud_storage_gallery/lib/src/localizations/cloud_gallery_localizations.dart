@@ -68,6 +68,15 @@ abstract class CloudGalleryLocalizations {
   String get menuMoveTo;
   String get menuInfo;
   String get menuDelete;
+  String get menuSelect;
+
+  // ── Selection mode ─────────────────────────────────────────────────────
+
+  /// AppBar title in selection mode, e.g. "3 selected".
+  String selectionCountLabel(int count);
+
+  /// Confirmation-dialog title for bulk delete, e.g. "Delete 3 items?".
+  String deleteMultipleTitle(int count);
 
   // ── Common button labels ───────────────────────────────────────────────
 

@@ -15,6 +15,10 @@ typedef CloudNodeLongPressCallback = void Function(
 
 /// Live grid of a folder's contents — folders shown as folder tiles, files as
 /// thumbnails (or generic icons until the Cloud Function generates a thumbnail).
+///
+/// Supports **selection mode**: when [selectedNodeIds] is non-empty and
+/// [onNodeToggleSelection] is provided, tap toggles selection instead of
+/// opening. Selected tiles show a filled check-circle overlay.
 class CloudFolderGrid extends StatelessWidget {
   const CloudFolderGrid({
     super.key,
@@ -23,6 +27,8 @@ class CloudFolderGrid extends StatelessWidget {
     this.onFolderTap,
     this.onFileTap,
     this.onNodeLongPress,
+    this.selectedNodeIds = const <String>{},
+    this.onNodeToggleSelection,
     this.crossAxisCount = 3,
     this.spacing = 8,
     this.emptyBuilder,
@@ -36,9 +42,20 @@ class CloudFolderGrid extends StatelessWidget {
   /// Fires for both files and folders. [LongPressStartDetails.globalPosition]
   /// is where the user's finger is — use it to anchor a context menu.
   final CloudNodeLongPressCallback? onNodeLongPress;
+
+  /// Ids currently selected. When non-empty the grid is in selection mode:
+  /// tap fires [onNodeToggleSelection] instead of the open callbacks, and
+  /// selected tiles get a check-circle overlay.
+  final Set<String> selectedNodeIds;
+
+  /// Called when the user taps a tile while selection mode is active.
+  final void Function(CloudNode node)? onNodeToggleSelection;
   final int crossAxisCount;
   final double spacing;
   final WidgetBuilder? emptyBuilder;
+
+  bool get _selectionMode =>
+      selectedNodeIds.isNotEmpty && onNodeToggleSelection != null;
 
   @override
   Widget build(BuildContext context) {
@@ -70,7 +87,12 @@ class CloudFolderGrid extends StatelessWidget {
             final node = nodes[i];
             return _NodeTile(
               node: node,
+              selected: selectedNodeIds.contains(node.id),
               onTap: () {
+                if (_selectionMode) {
+                  onNodeToggleSelection!(node);
+                  return;
+                }
                 if (node is CloudFolder) {
                   onFolderTap?.call(node);
                 } else if (node is CloudFile) {
@@ -93,9 +115,11 @@ class _NodeTile extends StatelessWidget {
     required this.node,
     required this.onTap,
     required this.onLongPressStart,
+    required this.selected,
   });
 
   final CloudNode node;
+  final bool selected;
   final VoidCallback onTap;
 
   /// Signature matches GestureDetector so we can surface the tap position
@@ -104,8 +128,9 @@ class _NodeTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Material(
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      color: scheme.surfaceContainerHighest,
       borderRadius: BorderRadius.circular(8),
       clipBehavior: Clip.antiAlias,
       // InkWell provides the ripple; a GestureDetector wraps it so we can
@@ -114,10 +139,39 @@ class _NodeTile extends StatelessWidget {
         onLongPressStart: onLongPressStart,
         child: InkWell(
           onTap: onTap,
-          child: switch (node) {
-            CloudFolder() => _FolderTile(folder: node as CloudFolder),
-            CloudFile() => _FileTile(file: node as CloudFile),
-          },
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              switch (node) {
+                CloudFolder() => _FolderTile(folder: node as CloudFolder),
+                CloudFile() => _FileTile(file: node as CloudFile),
+              },
+              if (selected)
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: scheme.primary, width: 3),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              if (selected)
+                PositionedDirectional(
+                  top: 4,
+                  end: 4,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: scheme.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    padding: const EdgeInsets.all(2),
+                    child: Icon(
+                      Icons.check,
+                      size: 16,
+                      color: scheme.onPrimary,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

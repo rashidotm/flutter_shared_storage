@@ -88,41 +88,41 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
         updatedAt: DateTime.fromMillisecondsSinceEpoch(0),
       );
 
+  // ── Selection mode ─────────────────────────────────────────────────────
+
+  /// Currently-selected nodes keyed by id. Non-empty = selection mode is
+  /// active. Kept as a map so bulk operations don't have to re-fetch each
+  /// node from Firestore just to know whether it's a file or folder.
+  final Map<String, CloudNode> _selected = <String, CloudNode>{};
+
+  bool get _inSelectionMode => _selected.isNotEmpty;
+
+  void _toggleSelection(CloudNode node) {
+    setState(() {
+      if (_selected.containsKey(node.id)) {
+        _selected.remove(node.id);
+      } else {
+        _selected[node.id] = node;
+      }
+    });
+  }
+
+  void _enterSelection(CloudNode node) {
+    setState(() => _selected[node.id] = node);
+  }
+
+  void _clearSelection() {
+    if (_selected.isEmpty) return;
+    setState(_selected.clear);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = CloudGalleryLocalizations.of(context);
     return Scaffold(
-      // The breadcrumb replaces the traditional AppBar title — it already
-      // shows the current folder as its last (bold) segment.
-      appBar: AppBar(
-        title: CloudFolderBreadcrumb(
-          storage: _storage,
-          folderId: widget.folderId,
-          chain: _chain,
-          rootLabel: widget.rootLabel,
-          onNavigate: (node) {
-            if (node.id == widget.folderId) return;
-            // Sub-chain up to the tapped ancestor — child renders instantly.
-            List<CloudNode>? childChain;
-            final chain = _chain;
-            if (chain != null) {
-              final idx = chain.indexWhere((n) => n.id == node.id);
-              if (idx >= 0) childChain = chain.sublist(0, idx + 1);
-            }
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute<void>(
-                builder: (_) => CloudFolderScreen(
-                  storage: _storage,
-                  folderId: node.id,
-                  initialChain: childChain,
-                  rootLabel: widget.rootLabel,
-                  readOnly: widget.readOnly,
-                ),
-              ),
-            );
-          },
-        ),
-      ),
+      appBar: _inSelectionMode
+          ? _buildSelectionAppBar(l10n)
+          : _buildBrowseAppBar(l10n),
       body: CloudFolderGrid(
         storage: _storage,
         folderId: widget.folderId,
@@ -160,8 +160,10 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
         },
         onNodeLongPress: (node, details) =>
             _showNodeMenu(node, details.globalPosition),
+        selectedNodeIds: _selected.keys.toSet(),
+        onNodeToggleSelection: widget.readOnly ? null : _toggleSelection,
       ),
-      floatingActionButton: widget.readOnly
+      floatingActionButton: (widget.readOnly || _inSelectionMode)
           ? null
           : Wrap(
               direction: Axis.horizontal,
@@ -181,6 +183,62 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
                 ),
               ],
             ),
+    );
+  }
+
+  PreferredSizeWidget _buildBrowseAppBar(CloudGalleryLocalizations l10n) {
+    return AppBar(
+      // The breadcrumb replaces the traditional AppBar title — it already
+      // shows the current folder as its last (bold) segment.
+      title: CloudFolderBreadcrumb(
+        storage: _storage,
+        folderId: widget.folderId,
+        chain: _chain,
+        rootLabel: widget.rootLabel,
+        onNavigate: (node) {
+          if (node.id == widget.folderId) return;
+          // Sub-chain up to the tapped ancestor — child renders instantly.
+          List<CloudNode>? childChain;
+          final chain = _chain;
+          if (chain != null) {
+            final idx = chain.indexWhere((n) => n.id == node.id);
+            if (idx >= 0) childChain = chain.sublist(0, idx + 1);
+          }
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute<void>(
+              builder: (_) => CloudFolderScreen(
+                storage: _storage,
+                folderId: node.id,
+                initialChain: childChain,
+                rootLabel: widget.rootLabel,
+                readOnly: widget.readOnly,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  PreferredSizeWidget _buildSelectionAppBar(CloudGalleryLocalizations l10n) {
+    return AppBar(
+      leading: IconButton(
+        icon: const Icon(Icons.close),
+        onPressed: _clearSelection,
+      ),
+      title: Text(l10n.selectionCountLabel(_selected.length)),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.drive_file_move),
+          tooltip: l10n.menuMoveTo,
+          onPressed: _bulkMove,
+        ),
+        IconButton(
+          icon: const Icon(Icons.delete_outline),
+          tooltip: l10n.menuDelete,
+          onPressed: _bulkDelete,
+        ),
+      ],
     );
   }
 
@@ -277,6 +335,14 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
       context: context,
       position: position,
       items: [
+        if (canMutate)
+          PopupMenuItem(
+            value: 'select',
+            child: ListTile(
+              leading: const Icon(Icons.check_box_outlined),
+              title: Text(l10n.menuSelect),
+            ),
+          ),
         if (isMedia || node is CloudFolder)
           PopupMenuItem(
             value: 'open',
@@ -330,6 +396,8 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
 
     if (!mounted || choice == null) return;
     switch (choice) {
+      case 'select':
+        _enterSelection(node);
       case 'open':
         _openNode(node);
       case 'download':
@@ -511,6 +579,75 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
     } else if (node is CloudFolder) {
       await _storage.deleteFolder(node.id, recursive: true);
     }
+  }
+
+  // ── Bulk actions (selection mode) ──────────────────────────────────────
+
+  Future<void> _bulkDelete() async {
+    final l10n = CloudGalleryLocalizations.of(context);
+    final nodes = _selected.values.toList(growable: false);
+    if (nodes.isEmpty) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(l10n.deleteMultipleTitle(nodes.length)),
+        content: Text(l10n.deleteFileBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.buttonCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.buttonDelete),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    for (final node in nodes) {
+      try {
+        if (node is CloudFile) {
+          await _storage.deleteFile(node.id);
+        } else if (node is CloudFolder) {
+          await _storage.deleteFolder(node.id, recursive: true);
+        }
+      } catch (_) {
+        // Best-effort — a single failure shouldn't abort the batch.
+      }
+    }
+    _clearSelection();
+  }
+
+  Future<void> _bulkMove() async {
+    final nodes = _selected.values.toList(growable: false);
+    if (nodes.isEmpty) return;
+    // Exclude any selected FOLDER from valid destinations — you can't
+    // move a folder into itself. Files-only selections have no exclusions.
+    final firstSelectedFolderId = nodes
+        .whereType<CloudFolder>()
+        .map((f) => f.id)
+        .firstOrNull;
+    final target = await pickCloudFolder(
+      context,
+      storage: _storage,
+      excludeFolderId: firstSelectedFolderId,
+      rootLabel: widget.rootLabel,
+    );
+    if (target == null) return;
+    for (final node in nodes) {
+      if (node.parentId == target || node.id == target) continue;
+      try {
+        if (node is CloudFile) {
+          await _storage.moveFile(node.id, newParentId: target);
+        } else if (node is CloudFolder) {
+          await _storage.moveFolder(node.id, newParentId: target);
+        }
+      } catch (_) {
+        // best-effort
+      }
+    }
+    _clearSelection();
   }
 
   static String _formatBytes(int bytes, CloudGalleryLocalizations l10n) {

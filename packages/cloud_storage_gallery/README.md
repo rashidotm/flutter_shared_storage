@@ -28,7 +28,8 @@ Ships with:
 
 - Breadcrumb in the app bar (tap any segment to jump).
 - Grid of subfolders + files, thumbnails when available.
-- Long-press context menu — **Open**, **Download**, **Rename**, **Move to…**, **Info**, **Delete** (last three suppressed when `readOnly`).
+- Long-press context menu — **Select**, **Open**, **Download**, **Rename**, **Move to…**, **Info**, **Delete** (mutation entries + **Select** suppressed when `readOnly`).
+- **Selection mode** — long-press → *Select* enters multi-select; tap tiles to toggle; the AppBar switches to `X selected` with bulk **Move to…** and **Delete** actions. Selected tiles get a primary-colored border + check-circle badge.
 - FABs — **Create folder**, **Upload file** (client-side thumbnails generated automatically for images + videos; supports selecting multiple files at once). Hidden when `readOnly`.
 - Upload progress dialog with a Cancel button; failed/cancelled uploads roll back the Firestore doc. For multi-file selections, an aggregate "X of N complete" batch dialog replaces the single-file one.
 
