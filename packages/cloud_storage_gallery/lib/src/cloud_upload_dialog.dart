@@ -1,6 +1,8 @@
 import 'package:cloud_storage_platform_interface/cloud_storage_platform_interface.dart';
 import 'package:flutter/material.dart';
 
+import 'localizations/cloud_gallery_localizations.dart';
+
 /// Progress dialog that tracks an [UploadTask] and offers a Cancel button.
 ///
 /// Pops itself when the underlying task reaches a terminal state (success,
@@ -10,13 +12,17 @@ class CloudUploadDialog extends StatefulWidget {
   const CloudUploadDialog({
     super.key,
     required this.task,
-    this.title = 'Uploading',
-    this.cancelLabel = 'Cancel',
+    this.title,
+    this.cancelLabel,
   });
 
   final UploadTask task;
-  final String title;
-  final String cancelLabel;
+
+  /// Dialog title. When null, uses the localized default.
+  final String? title;
+
+  /// Cancel button label. When null, uses the localized default.
+  final String? cancelLabel;
 
   @override
   State<CloudUploadDialog> createState() => _CloudUploadDialogState();
@@ -36,8 +42,9 @@ class _CloudUploadDialogState extends State<CloudUploadDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = CloudGalleryLocalizations.of(context);
     return AlertDialog(
-      title: Text(widget.title),
+      title: Text(widget.title ?? l10n.uploadingTitle),
       content: StreamBuilder<UploadProgress>(
         stream: widget.task.progress,
         builder: (context, snap) {
@@ -72,7 +79,7 @@ class _CloudUploadDialogState extends State<CloudUploadDialog> {
             await widget.task.cancel();
             _popOnce();
           },
-          child: Text(widget.cancelLabel),
+          child: Text(widget.cancelLabel ?? l10n.buttonCancel),
         ),
       ],
     );

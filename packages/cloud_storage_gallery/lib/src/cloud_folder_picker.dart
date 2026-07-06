@@ -2,6 +2,7 @@ import 'package:cloud_storage_platform_interface/cloud_storage_platform_interfac
 import 'package:flutter/material.dart';
 
 import 'cloud_breadcrumb.dart';
+import 'localizations/cloud_gallery_localizations.dart';
 
 /// Presents a modal that lets the user navigate the folder tree and pick a
 /// destination folder. Returns the selected folder's id, or `null` if the
@@ -16,9 +17,9 @@ Future<String?> pickCloudFolder(
   required CloudStorage storage,
   String? excludeFolderId,
   String startFolderId = kRootFolderId,
-  String title = 'Move to…',
-  String moveHereLabel = 'Move here',
-  String rootLabel = 'Home',
+  String? title,
+  String? moveHereLabel,
+  String? rootLabel,
 }) {
   return Navigator.of(context).push<String>(
     MaterialPageRoute(
@@ -48,9 +49,9 @@ class _CloudFolderPickerScreen extends StatefulWidget {
   final CloudStorage storage;
   final String startFolderId;
   final String? excludeFolderId;
-  final String title;
-  final String moveHereLabel;
-  final String rootLabel;
+  final String? title;
+  final String? moveHereLabel;
+  final String? rootLabel;
 
   @override
   State<_CloudFolderPickerScreen> createState() =>
@@ -71,13 +72,18 @@ class _CloudFolderPickerScreenState extends State<_CloudFolderPickerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = CloudGalleryLocalizations.of(context);
+    final title = widget.title ?? l10n.moveToTitle;
+    final moveHereLabel = widget.moveHereLabel ?? l10n.buttonMoveHere;
+    final rootLabel = widget.rootLabel ?? l10n.rootLabel;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text(title),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(_currentFolderId),
-            child: Text(widget.moveHereLabel),
+            child: Text(moveHereLabel),
           ),
         ],
       ),
@@ -86,7 +92,7 @@ class _CloudFolderPickerScreenState extends State<_CloudFolderPickerScreen> {
           CloudFolderBreadcrumb(
             storage: widget.storage,
             folderId: _currentFolderId,
-            rootLabel: widget.rootLabel,
+            rootLabel: rootLabel,
             onNavigate: (node) => _navigateTo(node.id),
           ),
           const Divider(height: 1),
@@ -104,7 +110,7 @@ class _CloudFolderPickerScreenState extends State<_CloudFolderPickerScreen> {
                     .toList();
                 if (folders.isEmpty) {
                   return Center(
-                    child: Text('No subfolders. Tap "${widget.moveHereLabel}" to pick this one.'),
+                    child: Text(l10n.moveHereEmptyHint(moveHereLabel)),
                   );
                 }
                 return ListView.builder(

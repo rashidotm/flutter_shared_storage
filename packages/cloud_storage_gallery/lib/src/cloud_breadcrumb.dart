@@ -1,6 +1,8 @@
 import 'package:cloud_storage_platform_interface/cloud_storage_platform_interface.dart';
 import 'package:flutter/material.dart';
 
+import 'localizations/cloud_gallery_localizations.dart';
+
 /// Renders a `/foo/bar/baz` style breadcrumb for the current folder, with
 /// each segment tappable.
 ///
@@ -20,7 +22,7 @@ class CloudFolderBreadcrumb extends StatefulWidget {
     required this.folderId,
     required this.onNavigate,
     this.chain,
-    this.rootLabel = 'Home',
+    this.rootLabel,
   });
 
   final CloudStorage storage;
@@ -32,7 +34,10 @@ class CloudFolderBreadcrumb extends StatefulWidget {
 
   /// Called with the [CloudFolder] (or a synthetic root) to navigate to.
   final void Function(CloudNode folder) onNavigate;
-  final String rootLabel;
+
+  /// Label shown for the root segment. When null, the localized default
+  /// (`CloudGalleryLocalizations.of(context).rootLabel`) is used.
+  final String? rootLabel;
 
   @override
   State<CloudFolderBreadcrumb> createState() => _CloudFolderBreadcrumbState();
@@ -113,6 +118,8 @@ class _CloudFolderBreadcrumbState extends State<CloudFolderBreadcrumb> {
     // "deeper" in the current text direction.
     final isRtl = Directionality.of(context) == TextDirection.rtl;
     final chevron = isRtl ? Icons.chevron_left : Icons.chevron_right;
+    final rootLabel =
+        widget.rootLabel ?? CloudGalleryLocalizations.of(context).rootLabel;
 
     // While the very first load is in flight, show the root label alone —
     // still meaningful, still tappable, no visible "empty then populated"
@@ -150,7 +157,7 @@ class _CloudFolderBreadcrumbState extends State<CloudFolderBreadcrumb> {
                   vertical: 4,
                 ),
                 child: Text(
-                  i == 0 ? widget.rootLabel : chain[i].name,
+                  i == 0 ? rootLabel : chain[i].name,
                   style: TextStyle(
                     fontWeight: i == chain.length - 1
                         ? FontWeight.bold

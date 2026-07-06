@@ -3,6 +3,7 @@ import 'package:cloud_storage_gallery/cloud_storage_gallery.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'firebase_options.dart';
 
@@ -34,6 +35,16 @@ class ExampleApp extends StatelessWidget {
     return MaterialApp(
       title: 'cloud_storage example',
       theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.indigo),
+      // Force Arabic to demo the built-in localization + automatic RTL.
+      // In a real app drop `locale` and let the device locale drive it.
+      locale: const Locale('ar'),
+      supportedLocales: CloudGalleryLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        CloudGalleryLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       home: CloudFolderScreen(storage: storage),
     );
   }

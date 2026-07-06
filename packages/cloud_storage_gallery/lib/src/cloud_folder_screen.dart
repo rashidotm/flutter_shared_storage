@@ -11,6 +11,7 @@ import 'cloud_folder_grid.dart';
 import 'cloud_folder_picker.dart';
 import 'cloud_media_viewer.dart';
 import 'cloud_upload_dialog.dart';
+import 'localizations/cloud_gallery_localizations.dart';
 import 'thumbnail_generator.dart';
 
 /// A ready-to-use, full-featured folder browser backed by [CloudStorage].
@@ -35,7 +36,7 @@ class CloudFolderScreen extends StatefulWidget {
     required this.storage,
     this.folderId = kRootFolderId,
     this.initialChain,
-    this.rootLabel = 'Home',
+    this.rootLabel,
     this.readOnly = false,
   });
 
@@ -46,8 +47,10 @@ class CloudFolderScreen extends StatefulWidget {
   /// self-loads on first show — used for deep-links / cold start.
   final List<CloudNode>? initialChain;
 
-  /// Label shown for the root folder in breadcrumbs.
-  final String rootLabel;
+  /// Label shown for the root folder in breadcrumbs. When null, the
+  /// localized default (`CloudGalleryLocalizations.of(context).rootLabel`)
+  /// is used.
+  final String? rootLabel;
 
   /// When true, hides the write-oriented UI:
   ///
@@ -86,6 +89,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = CloudGalleryLocalizations.of(context);
     return Scaffold(
       // The breadcrumb replaces the traditional AppBar title — it already
       // shows the current folder as its last (bold) segment.
@@ -164,13 +168,13 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
               children: [
                 FloatingActionButton(
                   heroTag: 'newFolder',
-                  tooltip: 'Create folder',
+                  tooltip: l10n.createFolderTooltip,
                   onPressed: _createFolder,
                   child: const Icon(Icons.create_new_folder),
                 ),
                 FloatingActionButton(
                   heroTag: 'upload',
-                  tooltip: 'Upload file',
+                  tooltip: l10n.uploadFileTooltip,
                   onPressed: _uploadFile,
                   child: const Icon(Icons.note_add_outlined),
                 ),
@@ -182,20 +186,21 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
   // ── FAB actions ─────────────────────────────────────────────────────────
 
   Future<void> _createFolder() async {
+    final l10n = CloudGalleryLocalizations.of(context);
     final controller = TextEditingController();
     final name = await showDialog<String>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('New folder'),
+        title: Text(l10n.newFolderTitle),
         content: TextField(controller: controller, autofocus: true),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(l10n.buttonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, controller.text.trim()),
-            child: const Text('Create'),
+            child: Text(l10n.buttonCreate),
           ),
         ],
       ),
@@ -244,6 +249,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
   // ── Long-press popup menu + actions ────────────────────────────────────
 
   Future<void> _showNodeMenu(CloudNode node, Offset globalPos) async {
+    final l10n = CloudGalleryLocalizations.of(context);
     final overlay =
         Overlay.of(context).context.findRenderObject()! as RenderBox;
     final position = RelativeRect.fromRect(
@@ -261,51 +267,51 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
       position: position,
       items: [
         if (isMedia || node is CloudFolder)
-          const PopupMenuItem(
+          PopupMenuItem(
             value: 'open',
             child: ListTile(
-              leading: Icon(Icons.open_in_new),
-              title: Text('Open'),
+              leading: const Icon(Icons.open_in_new),
+              title: Text(l10n.menuOpen),
             ),
           ),
         if (isFile)
-          const PopupMenuItem(
+          PopupMenuItem(
             value: 'download',
             child: ListTile(
-              leading: Icon(Icons.download),
-              title: Text('Download'),
+              leading: const Icon(Icons.download),
+              title: Text(l10n.menuDownload),
             ),
           ),
         if (canMutate)
-          const PopupMenuItem(
+          PopupMenuItem(
             value: 'rename',
             child: ListTile(
-              leading: Icon(Icons.drive_file_rename_outline),
-              title: Text('Rename'),
+              leading: const Icon(Icons.drive_file_rename_outline),
+              title: Text(l10n.menuRename),
             ),
           ),
         if (canMutate)
-          const PopupMenuItem(
+          PopupMenuItem(
             value: 'move',
             child: ListTile(
-              leading: Icon(Icons.drive_file_move),
-              title: Text('Move to…'),
+              leading: const Icon(Icons.drive_file_move),
+              title: Text(l10n.menuMoveTo),
             ),
           ),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: 'info',
           child: ListTile(
-            leading: Icon(Icons.info_outline),
-            title: Text('Info'),
+            leading: const Icon(Icons.info_outline),
+            title: Text(l10n.menuInfo),
           ),
         ),
         if (canMutate) const PopupMenuDivider(),
         if (canMutate)
-          const PopupMenuItem(
+          PopupMenuItem(
             value: 'delete',
             child: ListTile(
-              leading: Icon(Icons.delete_outline),
-              title: Text('Delete'),
+              leading: const Icon(Icons.delete_outline),
+              title: Text(l10n.menuDelete),
             ),
           ),
       ],
@@ -357,9 +363,10 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
   }
 
   Future<void> _downloadFile(CloudFile file) async {
+    final l10n = CloudGalleryLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
     messenger.showSnackBar(
-      SnackBar(content: Text('Downloading ${file.name}…')),
+      SnackBar(content: Text(l10n.downloadingSnack(file.name))),
     );
     try {
       final localFile = await _storage.download(file.id);
@@ -368,25 +375,28 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
         subject: file.name,
       );
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Download failed: $e')));
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.downloadFailedSnack(e))),
+      );
     }
   }
 
   Future<void> _renameNode(CloudNode node) async {
+    final l10n = CloudGalleryLocalizations.of(context);
     final controller = TextEditingController(text: node.name);
     final newName = await showDialog<String>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Rename'),
+        title: Text(l10n.renameTitle),
         content: TextField(controller: controller, autofocus: true),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(l10n.buttonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, controller.text.trim()),
-            child: const Text('Rename'),
+            child: Text(l10n.buttonRename),
           ),
         ],
       ),
@@ -418,14 +428,19 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
   }
 
   Future<void> _showInfo(CloudNode node) async {
+    final l10n = CloudGalleryLocalizations.of(context);
     final rows = <MapEntry<String, String>>[
-      MapEntry('Name', node.name),
-      MapEntry('Type', node is CloudFolder ? 'Folder' : 'File'),
-      MapEntry('Path', node.path.isEmpty ? '/' : node.path),
-      MapEntry('Created', node.createdAt.toLocal().toString()),
-      MapEntry('Updated', node.updatedAt.toLocal().toString()),
-      if (node is CloudFile) MapEntry('MIME', node.mimeType),
-      if (node is CloudFile) MapEntry('Size', _formatBytes(node.sizeBytes)),
+      MapEntry(l10n.infoLabelName, node.name),
+      MapEntry(
+        l10n.infoLabelType,
+        node is CloudFolder ? l10n.infoTypeFolder : l10n.infoTypeFile,
+      ),
+      MapEntry(l10n.infoLabelPath, node.path.isEmpty ? '/' : node.path),
+      MapEntry(l10n.infoLabelCreated, node.createdAt.toLocal().toString()),
+      MapEntry(l10n.infoLabelUpdated, node.updatedAt.toLocal().toString()),
+      if (node is CloudFile) MapEntry(l10n.infoLabelMime, node.mimeType),
+      if (node is CloudFile)
+        MapEntry(l10n.infoLabelSize, _formatBytes(node.sizeBytes, l10n)),
     ];
     await showDialog<void>(
       context: context,
@@ -450,7 +465,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+            child: Text(l10n.buttonClose),
           ),
         ],
       ),
@@ -458,24 +473,23 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
   }
 
   Future<void> _deleteNode(CloudNode node) async {
+    final l10n = CloudGalleryLocalizations.of(context);
     final isFolder = node is CloudFolder;
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text('Delete ${node.name}?'),
+        title: Text(l10n.deleteConfirmTitle(node.name)),
         content: Text(
-          isFolder
-              ? 'This will delete the folder and all its contents. This cannot be undone.'
-              : 'This cannot be undone.',
+          isFolder ? l10n.deleteFolderBody : l10n.deleteFileBody,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.buttonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            child: Text(l10n.buttonDelete),
           ),
         ],
       ),
@@ -488,12 +502,14 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
     }
   }
 
-  static String _formatBytes(int bytes) {
-    if (bytes < 1024) return '$bytes B';
-    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    if (bytes < 1024 * 1024 * 1024) {
-      return '${(bytes / 1024 / 1024).toStringAsFixed(1)} MB';
+  static String _formatBytes(int bytes, CloudGalleryLocalizations l10n) {
+    if (bytes < 1024) return '$bytes ${l10n.unitBytes}';
+    if (bytes < 1024 * 1024) {
+      return '${(bytes / 1024).toStringAsFixed(1)} ${l10n.unitKilobytes}';
     }
-    return '${(bytes / 1024 / 1024 / 1024).toStringAsFixed(1)} GB';
+    if (bytes < 1024 * 1024 * 1024) {
+      return '${(bytes / 1024 / 1024).toStringAsFixed(1)} ${l10n.unitMegabytes}';
+    }
+    return '${(bytes / 1024 / 1024 / 1024).toStringAsFixed(1)} ${l10n.unitGigabytes}';
   }
 }

@@ -4,6 +4,8 @@ Ready-made widgets for browsing folders, viewing media, uploading with progress,
 
 Everything inherits from the host app's `Theme` and respects `Directionality.of(context)` for RTL/LTR.
 
+Ships with **English** and **Arabic** translations out of the box — see [Localization](#localization) below.
+
 ## Fast path — `CloudFolderScreen`
 
 Drop-in file browser with every action wired up. This is what the example app uses:
@@ -42,6 +44,35 @@ If you want a different UX, compose your own screen from the pieces:
 | `CloudUploadDialog` | Progress dialog with an idempotent cancel. |
 | `pickCloudFolder(...)` | Modal folder picker. Returns the selected folder id. |
 | `generateThumbnails(File)` | JPEG thumb (256w) + preview (1024w) for images + videos. Returns `null` for other MIME types. |
+
+## Localization
+
+Register the delegate on your `MaterialApp` and choose a locale (or let the device locale drive it):
+
+```dart
+MaterialApp(
+  supportedLocales: CloudGalleryLocalizations.supportedLocales,
+  localizationsDelegates: const [
+    CloudGalleryLocalizations.delegate,
+    GlobalMaterialLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+  ],
+  // Force a locale for testing; omit in production to follow the device.
+  locale: const Locale('ar'),
+  home: CloudFolderScreen(storage: myStorage),
+);
+```
+
+Requires `flutter_localizations` in your pubspec:
+
+```yaml
+dependencies:
+  flutter_localizations:
+    sdk: flutter
+```
+
+**Adding a language.** Subclass `CloudGalleryLocalizations`, override every getter, and register your own `LocalizationsDelegate<CloudGalleryLocalizations>` before the built-in one in `localizationsDelegates`. Your delegate wins for the languages it says it supports; the built-in one covers `en` and `ar` and falls back to English otherwise.
 
 ## Dependencies
 

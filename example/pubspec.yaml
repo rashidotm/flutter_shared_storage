@@ -10,6 +10,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   cloud_storage:
     path: ../packages/cloud_storage
   cloud_storage_gallery:
