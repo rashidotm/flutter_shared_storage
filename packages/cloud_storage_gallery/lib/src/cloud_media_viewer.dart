@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chewie/chewie.dart';
 import 'package:cloud_storage_platform_interface/cloud_storage_platform_interface.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:video_player/video_player.dart';
@@ -128,9 +131,24 @@ class _VideoPageState extends State<_VideoPage> {
 
   Future<void> _init() async {
     try {
-      final controller = VideoPlayerController.networkUrl(
-        Uri.parse(widget.file.downloadUrl),
-      );
+      final url = widget.file.downloadUrl;
+      final cacheManager = DefaultCacheManager();
+
+      // If a cached copy already exists, play it directly — instant start,
+      // no network. Otherwise, stream from the network for immediate
+      // playback and kick off a background download so the NEXT view uses
+      // the cache. Same "stream now, cache for later" behavior that
+      // dedicated caching video players (like cached_video_player_plus)
+      // implement internally, but compatible with Chewie.
+      final cached = await cacheManager.getFileFromCache(url);
+      final VideoPlayerController controller;
+      if (cached != null) {
+        controller = VideoPlayerController.file(cached.file);
+      } else {
+        controller = VideoPlayerController.networkUrl(Uri.parse(url));
+        unawaited(cacheManager.downloadFile(url).then((_) {}, onError: (_) {}));
+      }
+
       await controller.initialize();
       if (!mounted) return;
       setState(() {
