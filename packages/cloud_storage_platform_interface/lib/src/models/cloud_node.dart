@@ -24,6 +24,7 @@ sealed class CloudNode {
 
   bool get isFolder => this is CloudFolder;
   bool get isFile => this is CloudFile;
+  bool get isLink => this is CloudLink;
 }
 
 @immutable
@@ -71,4 +72,36 @@ class CloudFile extends CloudNode {
   bool get isImage => mimeType.startsWith('image/');
   bool get isVideo => mimeType.startsWith('video/');
   bool get isMedia => isImage || isVideo;
+}
+
+/// A URL bookmark. Rendered as an entry in the folder grid alongside files
+/// and folders, but the payload is just a [url] — no storage bytes. Tapping
+/// a link opens the URL in an external browser / app.
+///
+/// Links may carry an optional user-supplied thumbnail (and preview) —
+/// useful because links have no content the client can auto-derive a
+/// thumbnail from.
+@immutable
+class CloudLink extends CloudNode {
+  const CloudLink({
+    required super.id,
+    required super.name,
+    required super.parentId,
+    required super.path,
+    required super.createdAt,
+    required super.updatedAt,
+    required this.url,
+    this.thumbnailUrl,
+    this.previewUrl,
+  });
+
+  /// The URL this link points to. May be missing a scheme — consumers
+  /// should normalize as needed.
+  final String url;
+
+  /// Optional user-supplied thumbnail, set via [CloudStorage.setThumbnail].
+  final String? thumbnailUrl;
+
+  /// Optional user-supplied preview (larger variant).
+  final String? previewUrl;
 }

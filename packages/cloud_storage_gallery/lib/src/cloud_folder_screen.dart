@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'cloud_batch_upload_dialog.dart';
 import 'cloud_breadcrumb.dart';
@@ -166,6 +167,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
           // Non-media (PDF, docs, etc.): download + hand off to the OS.
           _openFileExternally(file);
         },
+        onLinkTap: _openLink,
         onNodeLongPress: (node, details) =>
             _showNodeMenu(node, details.globalPosition),
         selectedNodeIds: _selected.keys.toSet(),
@@ -183,6 +185,12 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
                   tooltip: l10n.createFolderTooltip,
                   onPressed: _createFolder,
                   child: const Icon(Icons.create_new_folder),
+                ),
+                FloatingActionButton(
+                  heroTag: 'addLink',
+                  tooltip: l10n.addLinkTooltip,
+                  onPressed: _createLink,
+                  child: const Icon(Icons.add_link),
                 ),
                 FloatingActionButton(
                   heroTag: 'upload',
@@ -337,6 +345,9 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
 
     final isFile = node is CloudFile;
     final isMedia = isFile && node.isMedia;
+    final isLink = node is CloudLink;
+    // Files and links can carry a custom thumbnail; folders can't.
+    final canHaveThumbnail = isFile || isLink;
 
     final canMutate = !widget.readOnly;
 
@@ -352,7 +363,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
               title: Text(l10n.menuSelect),
             ),
           ),
-        if (isMedia || node is CloudFolder)
+        if (isMedia || node is CloudFolder || isLink)
           PopupMenuItem(
             value: 'open',
             child: ListTile(
@@ -368,7 +379,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
               title: Text(l10n.menuDownload),
             ),
           ),
-        if (isFile && canMutate)
+        if (canHaveThumbnail && canMutate)
           PopupMenuItem(
             value: 'thumbnail',
             child: ListTile(
@@ -420,7 +431,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
       case 'download':
         await _downloadFile(node as CloudFile);
       case 'thumbnail':
-        await _setThumbnail(node as CloudFile);
+        await _setThumbnail(node);
       case 'rename':
         await _renameNode(node);
       case 'move':
@@ -457,6 +468,10 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
           ),
         ),
       );
+      return;
+    }
+    if (node is CloudLink) {
+      unawaited(_openLink(node));
     }
   }
 
@@ -511,7 +526,8 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
     }
   }
 
-  Future<void> _setThumbnail(CloudFile file) async {
+  Future<void> _setThumbnail(CloudNode node) async {
+    if (node is CloudFolder) return;
     final l10n = CloudGalleryLocalizations.of(context);
     final result = await FilePicker.platform.pickFiles(type: FileType.image);
     if (result == null || result.files.isEmpty) return;
@@ -528,18 +544,88 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (_) => CloudBulkProgressDialog<CloudFile>(
+      builder: (_) => CloudBulkProgressDialog<CloudNode>(
         title: l10n.uploadingTitle,
-        items: [file],
-        operation: (f) async {
+        items: [node],
+        operation: (n) async {
           await _storage.setThumbnail(
-            f.id,
+            n.id,
             thumbnail: BytesSource(thumbnails.thumb),
             preview: BytesSource(thumbnails.preview),
           );
         },
       ),
     );
+  }
+
+  // ── Link actions ────────────────────────────────────────────────────────
+
+  Future<void> _createLink() async {
+    final l10n = CloudGalleryLocalizations.of(context);
+    final nameCtrl = TextEditingController();
+    final urlCtrl = TextEditingController();
+    final result = await showDialog<({String name, String url})>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(l10n.newLinkTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameCtrl,
+              autofocus: true,
+              decoration: InputDecoration(labelText: l10n.linkNameLabel),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: urlCtrl,
+              keyboardType: TextInputType.url,
+              decoration: InputDecoration(labelText: l10n.linkUrlLabel),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.buttonCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(
+              context,
+              (name: nameCtrl.text.trim(), url: urlCtrl.text.trim()),
+            ),
+            child: Text(l10n.buttonCreate),
+          ),
+        ],
+      ),
+    );
+    if (result == null) return;
+    if (result.name.isEmpty || result.url.isEmpty) return;
+    await _storage.createLink(
+      parentId: widget.folderId,
+      name: result.name,
+      url: _normalizeUrl(result.url),
+    );
+  }
+
+  Future<void> _openLink(CloudLink link) async {
+    final l10n = CloudGalleryLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final uri = Uri.tryParse(_normalizeUrl(link.url));
+    if (uri == null || !await canLaunchUrl(uri) ||
+        !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.linkOpenFailedSnack(link.url))),
+      );
+    }
+  }
+
+  /// Ensures a URL has a scheme so `launchUrl` can dispatch it correctly.
+  static String _normalizeUrl(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return trimmed;
+    if (RegExp(r'^[a-zA-Z][a-zA-Z0-9+.-]*:').hasMatch(trimmed)) return trimmed;
+    return 'https://$trimmed';
   }
 
   Future<void> _renameNode(CloudNode node) async {
@@ -567,6 +653,8 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
       await _storage.renameFile(node.id, newName);
     } else if (node is CloudFolder) {
       await _storage.renameFolder(node.id, newName);
+    } else if (node is CloudLink) {
+      await _storage.renameLink(node.id, newName);
     }
   }
 
@@ -593,6 +681,8 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
             await _storage.moveFile(n.id, newParentId: target);
           } else if (n is CloudFolder) {
             await _storage.moveFolder(n.id, newParentId: target);
+          } else if (n is CloudLink) {
+            await _storage.moveLink(n.id, newParentId: target);
           }
         },
       ),
@@ -605,7 +695,11 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
       MapEntry(l10n.infoLabelName, node.name),
       MapEntry(
         l10n.infoLabelType,
-        node is CloudFolder ? l10n.infoTypeFolder : l10n.infoTypeFile,
+        switch (node) {
+          CloudFolder() => l10n.infoTypeFolder,
+          CloudLink() => 'Link',
+          CloudFile() => l10n.infoTypeFile,
+        },
       ),
       MapEntry(l10n.infoLabelPath, node.path.isEmpty ? '/' : node.path),
       MapEntry(l10n.infoLabelCreated, node.createdAt.toLocal().toString()),
@@ -613,6 +707,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
       if (node is CloudFile) MapEntry(l10n.infoLabelMime, node.mimeType),
       if (node is CloudFile)
         MapEntry(l10n.infoLabelSize, _formatBytes(node.sizeBytes, l10n)),
+      if (node is CloudLink) MapEntry(l10n.infoLabelUrl, node.url),
     ];
     await showDialog<void>(
       context: context,
@@ -678,6 +773,8 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
             await _storage.deleteFile(n.id);
           } else if (n is CloudFolder) {
             await _storage.deleteFolder(n.id, recursive: true);
+          } else if (n is CloudLink) {
+            await _storage.deleteLink(n.id);
           }
         },
       ),
@@ -719,6 +816,8 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
             await _storage.deleteFile(node.id);
           } else if (node is CloudFolder) {
             await _storage.deleteFolder(node.id, recursive: true);
+          } else if (node is CloudLink) {
+            await _storage.deleteLink(node.id);
           }
         },
       ),
@@ -761,6 +860,8 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
             await _storage.moveFile(node.id, newParentId: target);
           } else if (node is CloudFolder) {
             await _storage.moveFolder(node.id, newParentId: target);
+          } else if (node is CloudLink) {
+            await _storage.moveLink(node.id, newParentId: target);
           }
         },
       ),

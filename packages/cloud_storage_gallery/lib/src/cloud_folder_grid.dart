@@ -26,6 +26,7 @@ class CloudFolderGrid extends StatelessWidget {
     required this.folderId,
     this.onFolderTap,
     this.onFileTap,
+    this.onLinkTap,
     this.onNodeLongPress,
     this.selectedNodeIds = const <String>{},
     this.onNodeToggleSelection,
@@ -38,6 +39,7 @@ class CloudFolderGrid extends StatelessWidget {
   final String folderId;
   final void Function(CloudFolder folder)? onFolderTap;
   final void Function(CloudFile file, List<CloudFile> mediaSiblings)? onFileTap;
+  final void Function(CloudLink link)? onLinkTap;
 
   /// Fires for both files and folders. [LongPressStartDetails.globalPosition]
   /// is where the user's finger is — use it to anchor a context menu.
@@ -97,6 +99,8 @@ class CloudFolderGrid extends StatelessWidget {
                   onFolderTap?.call(node);
                 } else if (node is CloudFile) {
                   onFileTap?.call(node, mediaSiblings);
+                } else if (node is CloudLink) {
+                  onLinkTap?.call(node);
                 }
               },
               onLongPressStart: onNodeLongPress == null
@@ -145,6 +149,7 @@ class _NodeTile extends StatelessWidget {
               switch (node) {
                 CloudFolder() => _FolderTile(folder: node as CloudFolder),
                 CloudFile() => _FileTile(file: node as CloudFile),
+                CloudLink() => _LinkTile(link: node as CloudLink),
               },
               if (selected)
                 Container(
@@ -281,4 +286,48 @@ class _GenericFileIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       const Center(child: Icon(Icons.broken_image_outlined, size: 48));
+}
+
+class _LinkTile extends StatelessWidget {
+  const _LinkTile({required this.link});
+  final CloudLink link;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final thumb = link.thumbnailUrl;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        if (thumb != null && thumb.isNotEmpty)
+          CachedNetworkImage(
+            imageUrl: thumb,
+            fit: BoxFit.cover,
+            placeholder: (_, __) => ColoredBox(
+              color: theme.colorScheme.surfaceContainerHighest,
+            ),
+            errorWidget: (_, __, ___) => const Center(
+              child: Icon(Icons.link, size: 48),
+            ),
+          )
+        else
+          const Center(child: Icon(Icons.link, size: 48)),
+        PositionedDirectional(
+          start: 0,
+          end: 0,
+          bottom: 0,
+          child: Container(
+            color: theme.colorScheme.scrim.withValues(alpha: 0.5),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            child: Text(
+              link.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelSmall,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }

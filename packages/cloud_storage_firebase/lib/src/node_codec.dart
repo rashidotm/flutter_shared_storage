@@ -33,6 +33,20 @@ CloudNode _nodeFromData(String id, Map<String, dynamic> data) {
     );
   }
 
+  if (type == kTypeLink) {
+    return CloudLink(
+      id: id,
+      name: data[kFieldName] as String? ?? '',
+      parentId: data[kFieldParentId] as String? ?? '',
+      path: data[kFieldPath] as String? ?? '',
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+      url: data[kFieldUrl] as String? ?? '',
+      thumbnailUrl: data[kFieldThumbnailUrl] as String?,
+      previewUrl: data[kFieldPreviewUrl] as String?,
+    );
+  }
+
   return CloudFile(
     id: id,
     name: data[kFieldName] as String? ?? '',

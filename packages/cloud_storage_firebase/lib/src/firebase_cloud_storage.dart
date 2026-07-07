@@ -164,10 +164,13 @@ class FirebaseCloudStorage implements CloudStorage {
     }
     for (final child in children.docs) {
       final type = child.data()[kFieldType] as String?;
-      if (type == kTypeFolder) {
-        await deleteFolder(child.id, recursive: true);
-      } else {
-        await deleteFile(child.id);
+      switch (type) {
+        case kTypeFolder:
+          await deleteFolder(child.id, recursive: true);
+        case kTypeLink:
+          await deleteLink(child.id);
+        default:
+          await deleteFile(child.id);
       }
     }
     await _nodes.doc(folderId).delete();
@@ -402,18 +405,20 @@ class FirebaseCloudStorage implements CloudStorage {
 
   @override
   Future<void> setThumbnail(
-    String fileId, {
+    String nodeId, {
     required Source thumbnail,
     Source? preview,
   }) async {
-    final node = await getNode(fileId);
-    if (node is! CloudFile) {
-      throw const InvalidArgumentException('Node is a folder, not a file');
+    final node = await getNode(nodeId);
+    if (node is CloudFolder) {
+      throw const InvalidArgumentException(
+        'Cannot set a thumbnail on a folder',
+      );
     }
 
     final thumbUrl = await _uploadVariant(
       source: thumbnail,
-      path: thumbPathFor(_storageRoot, fileId),
+      path: thumbPathFor(_storageRoot, nodeId),
     );
     if (thumbUrl == null) {
       throw const UploadFailedException('Thumbnail upload failed');
@@ -423,15 +428,92 @@ class FirebaseCloudStorage implements CloudStorage {
     if (preview != null) {
       previewUrl = await _uploadVariant(
         source: preview,
-        path: previewPathFor(_storageRoot, fileId),
+        path: previewPathFor(_storageRoot, nodeId),
       );
     }
 
-    await _nodes.doc(fileId).update(<String, Object?>{
+    await _nodes.doc(nodeId).update(<String, Object?>{
       kFieldThumbnailUrl: thumbUrl,
       if (previewUrl != null) kFieldPreviewUrl: previewUrl,
       kFieldUpdatedAt: FieldValue.serverTimestamp(),
     });
+  }
+
+  // ── Links ─────────────────────────────────────────────────────────────────
+
+  @override
+  Future<CloudLink> createLink({
+    required String parentId,
+    required String name,
+    required String url,
+  }) async {
+    _validateName(name);
+    if (url.trim().isEmpty) {
+      throw const InvalidArgumentException('URL cannot be empty');
+    }
+    final resolved = await _resolver.resolve(
+      parentId: parentId,
+      desiredName: name,
+    );
+    final path = await _pathFor(parentId, resolved);
+    final doc = _nodes.doc();
+    final now = FieldValue.serverTimestamp();
+    await doc.set(<String, Object?>{
+      kFieldType: kTypeLink,
+      kFieldName: resolved,
+      kFieldParentId: parentId,
+      kFieldPath: path,
+      kFieldUrl: url,
+      kFieldCreatedAt: now,
+      kFieldUpdatedAt: now,
+    });
+    final created = await doc.get();
+    return nodeFromSnapshot(created) as CloudLink;
+  }
+
+  @override
+  Future<void> updateLinkUrl(String linkId, String newUrl) async {
+    if (newUrl.trim().isEmpty) {
+      throw const InvalidArgumentException('URL cannot be empty');
+    }
+    final node = await getNode(linkId);
+    if (node is! CloudLink) {
+      throw const InvalidArgumentException('Node is not a link');
+    }
+    await _nodes.doc(linkId).update(<String, Object?>{
+      kFieldUrl: newUrl,
+      kFieldUpdatedAt: FieldValue.serverTimestamp(),
+    });
+  }
+
+  @override
+  Future<void> renameLink(String linkId, String newName) async {
+    _validateName(newName);
+    await _renameNode(linkId, newName);
+  }
+
+  @override
+  Future<void> moveLink(String linkId, {required String newParentId}) =>
+      _moveNode(linkId, newParentId);
+
+  @override
+  Future<void> deleteLink(String linkId) async {
+    final node = await getNode(linkId);
+    if (node is! CloudLink) {
+      throw const InvalidArgumentException('Node is not a link');
+    }
+    // Links may carry an optional thumbnail — purge it best-effort.
+    for (final path in <String>[
+      thumbPathFor(_storageRoot, linkId),
+      previewPathFor(_storageRoot, linkId),
+    ]) {
+      try {
+        await _storage.ref(path).delete();
+      } on fbs.FirebaseException catch (e) {
+        if (e.code != 'object-not-found') rethrow;
+      }
+    }
+    await _nodes.doc(linkId).delete();
   }
 
   // ── Shared rename/move ────────────────────────────────────────────────────

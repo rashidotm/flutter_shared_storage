@@ -79,20 +79,38 @@ abstract class CloudStorage {
   Future<void> moveFile(String fileId, {required String newParentId});
 
   /// Attaches or replaces a custom thumbnail (and optionally a preview)
-  /// for an existing file. Useful for files that don't have a
-  /// content-derived thumbnail — PDFs, docs, etc. — or to override a bad
+  /// for an existing file or link. Useful for files that don't have a
+  /// content-derived thumbnail — PDFs, docs, links — or to override a bad
   /// auto-generated one.
   ///
   /// Both sources should be **JPEG** bytes/files. The backend writes them
-  /// to the well-known variant paths and updates the file's
+  /// to the well-known variant paths and updates the node's
   /// `thumbnailUrl` / `previewUrl`. Existing variants at those paths are
   /// overwritten.
   ///
-  /// When the file is later deleted via [deleteFile], the variants are
-  /// removed alongside it automatically.
+  /// When the node is later deleted, the variants are removed alongside
+  /// it automatically. Throws [InvalidArgumentException] if [nodeId]
+  /// refers to a folder.
   Future<void> setThumbnail(
-    String fileId, {
+    String nodeId, {
     required Source thumbnail,
     Source? preview,
   });
+
+  // ── Links ─────────────────────────────────────────────────────────────────
+
+  /// Creates a URL bookmark under [parentId]. Same naming rules as folders
+  /// and files — auto-suffixed on collision.
+  Future<CloudLink> createLink({
+    required String parentId,
+    required String name,
+    required String url,
+  });
+
+  /// Updates the target [url] of an existing link node.
+  Future<void> updateLinkUrl(String linkId, String newUrl);
+
+  Future<void> renameLink(String linkId, String newName);
+  Future<void> moveLink(String linkId, {required String newParentId});
+  Future<void> deleteLink(String linkId);
 }

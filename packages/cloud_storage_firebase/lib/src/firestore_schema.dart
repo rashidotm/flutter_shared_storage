@@ -42,11 +42,13 @@ const String kFieldStoragePath = 'storagePath';
 const String kFieldDownloadUrl = 'downloadUrl';
 const String kFieldThumbnailUrl = 'thumbnailUrl';
 const String kFieldPreviewUrl = 'previewUrl';
+const String kFieldUrl = 'url';
 const String kFieldCreatedAt = 'createdAt';
 const String kFieldUpdatedAt = 'updatedAt';
 
 const String kTypeFile = 'file';
 const String kTypeFolder = 'folder';
+const String kTypeLink = 'link';
 
 /// Storage path for the original bytes: `{storageRoot}/{nodeId}{.ext}`.
 ///

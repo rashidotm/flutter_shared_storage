@@ -59,6 +59,7 @@ abstract class CloudGalleryLocalizations {
 
   String get createFolderTooltip;
   String get uploadFileTooltip;
+  String get addLinkTooltip;
 
   // ── Popup menu items ───────────────────────────────────────────────────
 
@@ -91,6 +92,18 @@ abstract class CloudGalleryLocalizations {
   // ── New folder dialog ──────────────────────────────────────────────────
 
   String get newFolderTitle;
+
+  // ── New link dialog ────────────────────────────────────────────────────
+
+  String get newLinkTitle;
+  String get linkNameLabel;
+  String get linkUrlLabel;
+
+  /// Snackbar shown when the OS can't launch the tapped URL.
+  String linkOpenFailedSnack(String url);
+
+  /// Info-dialog row label for a link's URL.
+  String get infoLabelUrl;
 
   // ── Rename dialog ──────────────────────────────────────────────────────
 

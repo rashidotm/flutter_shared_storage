@@ -11,6 +11,8 @@ class CloudGalleryLocalizationsAr extends CloudGalleryLocalizations {
   String get createFolderTooltip => 'إنشاء مجلد';
   @override
   String get uploadFileTooltip => 'رفع ملف';
+  @override
+  String get addLinkTooltip => 'إضافة رابط';
 
   @override
   String get menuOpen => 'فتح';
@@ -49,6 +51,16 @@ class CloudGalleryLocalizationsAr extends CloudGalleryLocalizations {
 
   @override
   String get newFolderTitle => 'مجلد جديد';
+  @override
+  String get newLinkTitle => 'رابط جديد';
+  @override
+  String get linkNameLabel => 'الاسم';
+  @override
+  String get linkUrlLabel => 'الرابط';
+  @override
+  String linkOpenFailedSnack(String url) => 'تعذّر فتح الرابط: $url';
+  @override
+  String get infoLabelUrl => 'الرابط';
   @override
   String get renameTitle => 'إعادة تسمية';
 

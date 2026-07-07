@@ -12,6 +12,8 @@ class CloudGalleryLocalizationsEn extends CloudGalleryLocalizations {
   String get createFolderTooltip => 'Create folder';
   @override
   String get uploadFileTooltip => 'Upload file';
+  @override
+  String get addLinkTooltip => 'Add link';
 
   @override
   String get menuOpen => 'Open';
@@ -50,6 +52,16 @@ class CloudGalleryLocalizationsEn extends CloudGalleryLocalizations {
 
   @override
   String get newFolderTitle => 'New folder';
+  @override
+  String get newLinkTitle => 'New link';
+  @override
+  String get linkNameLabel => 'Name';
+  @override
+  String get linkUrlLabel => 'URL';
+  @override
+  String linkOpenFailedSnack(String url) => 'Could not open link: $url';
+  @override
+  String get infoLabelUrl => 'URL';
   @override
   String get renameTitle => 'Rename';
 
