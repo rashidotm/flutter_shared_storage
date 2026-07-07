@@ -760,7 +760,10 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
               for (final e in rows) ...[
                 Text(
                   e.key,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 Text(e.value),
                 const SizedBox(height: 8),

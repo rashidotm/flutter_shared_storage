@@ -103,9 +103,10 @@ class _ImagePage extends StatelessWidget {
           maxScale: PhotoViewComputedScale.covered * 4,
         ),
       ],
-      // photo_view requires a background decoration. Use the scaffold color
-      // so the viewer follows the app's light/dark theme.
-      backgroundDecoration: BoxDecoration(color: theme.scaffoldBackgroundColor),
+      // photo_view requires a background decoration. Use the M3 surface
+      // color so the viewer follows the app's light/dark theme consistently
+      // with the rest of the gallery widgets.
+      backgroundDecoration: BoxDecoration(color: theme.colorScheme.surface),
     );
   }
 }

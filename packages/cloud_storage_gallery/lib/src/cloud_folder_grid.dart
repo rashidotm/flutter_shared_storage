@@ -249,8 +249,11 @@ class _FileTile extends StatelessWidget {
           end: 0,
           bottom: 0,
           child: Container(
-            // Scrim is a theme token defined for overlays like this one.
-            color: theme.colorScheme.scrim.withValues(alpha: 0.5),
+            // Semi-transparent surface — high contrast with `onSurface`
+            // (default color of the labelSmall style used below) in both
+            // light and dark themes. Scrim + onSurface would be
+            // unreadable in light theme.
+            color: theme.colorScheme.surface.withValues(alpha: 0.85),
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             child: Text(
               file.name,
@@ -323,7 +326,7 @@ class _LinkTile extends StatelessWidget {
           end: 0,
           bottom: 0,
           child: Container(
-            color: theme.colorScheme.scrim.withValues(alpha: 0.5),
+            color: theme.colorScheme.surface.withValues(alpha: 0.85),
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             child: Text(
               link.name,

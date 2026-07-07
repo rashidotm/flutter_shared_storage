@@ -120,6 +120,11 @@ class _CloudFolderBreadcrumbState extends State<CloudFolderBreadcrumb> {
     final chevron = isRtl ? Icons.chevron_left : Icons.chevron_right;
     final rootLabel =
         widget.rootLabel ?? CloudGalleryLocalizations.of(context).rootLabel;
+    // Placed inside an AppBar.title the ambient DefaultTextStyle is
+    // titleLarge; when used stand-alone it's the inherited body style.
+    // Either way, deriving from the current textTheme makes the intent
+    // explicit and keeps the fontWeight override obvious.
+    final baseStyle = Theme.of(context).textTheme.titleMedium;
 
     // While the very first load is in flight, show the root label alone —
     // still meaningful, still tappable, no visible "empty then populated"
@@ -158,7 +163,7 @@ class _CloudFolderBreadcrumbState extends State<CloudFolderBreadcrumb> {
                 ),
                 child: Text(
                   i == 0 ? rootLabel : chain[i].name,
-                  style: TextStyle(
+                  style: baseStyle?.copyWith(
                     fontWeight: i == chain.length - 1
                         ? FontWeight.bold
                         : FontWeight.normal,
