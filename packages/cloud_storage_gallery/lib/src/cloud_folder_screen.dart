@@ -612,8 +612,24 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
     final l10n = CloudGalleryLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final uri = Uri.tryParse(_normalizeUrl(link.url));
-    if (uri == null || !await canLaunchUrl(uri) ||
-        !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+    if (uri == null) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.linkOpenFailedSnack(link.url))),
+      );
+      return;
+    }
+    // Don't gate on `canLaunchUrl` — on Android 11+ it returns false
+    // unless the host app declares matching <queries> in its manifest,
+    // even when launching would actually succeed. `launchUrl` itself
+    // handles the missing-handler case by returning false / throwing.
+    try {
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok) {
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.linkOpenFailedSnack(link.url))),
+        );
+      }
+    } catch (_) {
       messenger.showSnackBar(
         SnackBar(content: Text(l10n.linkOpenFailedSnack(link.url))),
       );
