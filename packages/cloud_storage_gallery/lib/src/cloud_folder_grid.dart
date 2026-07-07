@@ -28,6 +28,7 @@ class CloudFolderGrid extends StatelessWidget {
     this.onFileTap,
     this.onLinkTap,
     this.onNodeLongPress,
+    this.selectionMode = false,
     this.selectedNodeIds = const <String>{},
     this.onNodeToggleSelection,
     this.crossAxisCount = 3,
@@ -45,19 +46,24 @@ class CloudFolderGrid extends StatelessWidget {
   /// is where the user's finger is — use it to anchor a context menu.
   final CloudNodeLongPressCallback? onNodeLongPress;
 
-  /// Ids currently selected. When non-empty the grid is in selection mode:
-  /// tap fires [onNodeToggleSelection] instead of the open callbacks, and
-  /// selected tiles get a check-circle overlay.
+  /// When true the grid is in selection mode: tap fires
+  /// [onNodeToggleSelection] instead of the open callbacks. Selected
+  /// tiles (listed in [selectedNodeIds]) get a check-circle overlay.
+  /// Can be true even with an empty [selectedNodeIds] — that's the
+  /// "just entered selection mode, waiting for the first pick" case.
+  final bool selectionMode;
+
+  /// Ids currently selected — rendered with a check-circle overlay.
   final Set<String> selectedNodeIds;
 
-  /// Called when the user taps a tile while selection mode is active.
+  /// Called when the user taps a tile while [selectionMode] is active.
   final void Function(CloudNode node)? onNodeToggleSelection;
   final int crossAxisCount;
   final double spacing;
   final WidgetBuilder? emptyBuilder;
 
   bool get _selectionMode =>
-      selectedNodeIds.isNotEmpty && onNodeToggleSelection != null;
+      selectionMode && onNodeToggleSelection != null;
 
   @override
   Widget build(BuildContext context) {

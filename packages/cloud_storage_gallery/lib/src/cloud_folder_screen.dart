@@ -93,12 +93,19 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
 
   // ── Selection mode ─────────────────────────────────────────────────────
 
-  /// Currently-selected nodes keyed by id. Non-empty = selection mode is
-  /// active. Kept as a map so bulk operations don't have to re-fetch each
-  /// node from Firestore just to know whether it's a file or folder.
+  /// Currently-selected nodes keyed by id. Kept as a map so bulk operations
+  /// don't have to re-fetch each node from Firestore just to know whether
+  /// it's a file, folder, or link.
   final Map<String, CloudNode> _selected = <String, CloudNode>{};
 
-  bool get _inSelectionMode => _selected.isNotEmpty;
+  /// True whenever the user is browsing in selection mode — either because
+  /// they long-pressed → Select on a node, or tapped the "Select items"
+  /// FAB. Independent of whether [_selected] has any entries yet, so the
+  /// user can enter selection mode with zero items and then tap tiles to
+  /// pick.
+  bool _selectionActive = false;
+
+  bool get _inSelectionMode => _selectionActive;
 
   void _toggleSelection(CloudNode node) {
     setState(() {
@@ -110,13 +117,19 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
     });
   }
 
-  void _enterSelection(CloudNode node) {
-    setState(() => _selected[node.id] = node);
+  void _enterSelection([CloudNode? node]) {
+    setState(() {
+      _selectionActive = true;
+      if (node != null) _selected[node.id] = node;
+    });
   }
 
   void _clearSelection() {
-    if (_selected.isEmpty) return;
-    setState(_selected.clear);
+    if (!_selectionActive && _selected.isEmpty) return;
+    setState(() {
+      _selectionActive = false;
+      _selected.clear();
+    });
   }
 
   @override
@@ -170,6 +183,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
         onLinkTap: _openLink,
         onNodeLongPress: (node, details) =>
             _showNodeMenu(node, details.globalPosition),
+        selectionMode: _selectionActive,
         selectedNodeIds: _selected.keys.toSet(),
         onNodeToggleSelection: widget.readOnly ? null : _toggleSelection,
       ),
@@ -180,6 +194,12 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
               direction: Axis.horizontal,
               spacing: 8,
               children: [
+                FloatingActionButton(
+                  heroTag: 'select',
+                  tooltip: l10n.menuSelect,
+                  onPressed: () => _enterSelection(),
+                  child: const Icon(Icons.checklist),
+                ),
                 FloatingActionButton(
                   heroTag: 'newFolder',
                   tooltip: l10n.createFolderTooltip,
@@ -238,6 +258,9 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
   }
 
   PreferredSizeWidget _buildSelectionAppBar(CloudGalleryLocalizations l10n) {
+    // Disable bulk actions when there's nothing selected — user's just
+    // entered selection mode via the FAB and hasn't picked anything yet.
+    final hasSelection = _selected.isNotEmpty;
     return AppBar(
       leading: IconButton(
         icon: const Icon(Icons.close),
@@ -248,12 +271,12 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
         IconButton(
           icon: const Icon(Icons.drive_file_move),
           tooltip: l10n.menuMoveTo,
-          onPressed: _bulkMove,
+          onPressed: hasSelection ? _bulkMove : null,
         ),
         IconButton(
           icon: const Icon(Icons.delete_outline),
           tooltip: l10n.menuDelete,
-          onPressed: _bulkDelete,
+          onPressed: hasSelection ? _bulkDelete : null,
         ),
       ],
     );

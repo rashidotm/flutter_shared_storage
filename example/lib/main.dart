@@ -34,7 +34,7 @@ class ExampleApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'cloud_storage example',
-      theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.indigo),
+      theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.green),
       // Force Arabic to demo the built-in localization + automatic RTL.
       // In a real app drop `locale` and let the device locale drive it.
       locale: const Locale('ar'),
