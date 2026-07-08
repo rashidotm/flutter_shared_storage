@@ -1,7 +1,16 @@
 name: cloud_storage_platform_interface
-description: Platform interface for cloud_storage. Backend-agnostic contract for cloud file/folder storage.
+description: Backend-agnostic contract for cloud_storage — a Flutter file/folder/link storage layer. Implement this to add a new backend.
 version: 0.1.0
-publish_to: none
+
+homepage: https://github.com/rashidotm/flutter_shared_storage
+repository: https://github.com/rashidotm/flutter_shared_storage/tree/master/packages/cloud_storage_platform_interface
+issue_tracker: https://github.com/rashidotm/flutter_shared_storage/issues
+
+topics:
+  - cloud-storage
+  - federated-plugin
+  - platform-interface
+  - file-manager
 
 environment:
   sdk: ">=3.3.0 <4.0.0"

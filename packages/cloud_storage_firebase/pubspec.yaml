@@ -1,7 +1,17 @@
 name: cloud_storage_firebase
-description: Firebase Storage + Firestore implementation of cloud_storage_platform_interface.
+description: Firebase Storage + Cloud Firestore implementation of cloud_storage_platform_interface. Caller-supplied paths, no uid assumption.
 version: 0.1.0
-publish_to: none
+
+homepage: https://github.com/rashidotm/flutter_shared_storage
+repository: https://github.com/rashidotm/flutter_shared_storage/tree/master/packages/cloud_storage_firebase
+issue_tracker: https://github.com/rashidotm/flutter_shared_storage/issues
+
+topics:
+  - cloud-storage
+  - firebase
+  - firestore
+  - firebase-storage
+  - file-manager
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
@@ -10,8 +20,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  cloud_storage_platform_interface:
-    path: ../cloud_storage_platform_interface
+  cloud_storage_platform_interface: ^0.1.0
   firebase_core: ^3.6.0
   firebase_auth: ^5.3.1
   firebase_storage: ^12.3.2
@@ -26,3 +35,10 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+
+# For monorepo development, always resolve the sibling package from the
+# local source. `pub publish` ignores dependency_overrides — consumers on
+# pub.dev pick up the version-based dep above.
+dependency_overrides:
+  cloud_storage_platform_interface:
+    path: ../cloud_storage_platform_interface
