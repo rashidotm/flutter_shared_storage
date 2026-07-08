@@ -242,27 +242,31 @@ class _FileTile extends StatelessWidget {
             alignment: Alignment.center,
             child: Icon(Icons.play_circle_fill, size: 48),
           ),
-        // PositionedDirectional + start:0/end:0 keeps the strip spanning the
-        // whole width and respects the inherited text direction.
-        PositionedDirectional(
-          start: 0,
-          end: 0,
-          bottom: 0,
-          child: Container(
-            // Semi-transparent surface — high contrast with `onSurface`
-            // (default color of the labelSmall style used below) in both
-            // light and dark themes. Scrim + onSurface would be
-            // unreadable in light theme.
-            color: theme.colorScheme.surface.withValues(alpha: 0.85),
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-            child: Text(
-              file.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.labelSmall,
+        // Filename strip: shown for non-media files (PDFs, docs, audio,
+        // generic icons) where a name is the only identifier. Hidden for
+        // images and videos — the thumbnail already communicates what the
+        // file is, so overlaying text just obscures the visual.
+        // PositionedDirectional keeps the strip spanning the tile width
+        // and respects the inherited text direction.
+        if (!file.isMedia)
+          PositionedDirectional(
+            start: 0,
+            end: 0,
+            bottom: 0,
+            child: Container(
+              // Semi-transparent surface — high contrast with `onSurface`
+              // (default color of labelSmall) in both light and dark
+              // themes.
+              color: theme.colorScheme.surface.withValues(alpha: 0.85),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              child: Text(
+                file.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelSmall,
+              ),
             ),
           ),
-        ),
       ],
     );
   }
