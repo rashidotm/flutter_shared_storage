@@ -84,7 +84,16 @@ class CloudFolderGrid extends StatelessWidget {
         }
         final mediaSiblings = nodes.whereType<CloudFile>().where((f) => f.isMedia).toList();
         return GridView.builder(
-          padding: EdgeInsets.all(spacing),
+          // Extra bottom padding leaves the last row visible above any
+          // floating action button (or other bottom-anchored chrome).
+          // Standard FAB is 56 dp + 16 dp margin from the edge; 80 dp
+          // gives one row of breathing room on top of that.
+          padding: EdgeInsets.fromLTRB(
+            spacing,
+            spacing,
+            spacing,
+            spacing + 80,
+          ),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
             crossAxisSpacing: spacing,
