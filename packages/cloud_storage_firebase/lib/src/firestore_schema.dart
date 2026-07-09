@@ -30,7 +30,7 @@
 ///
 /// The Firestore folder hierarchy is entirely independent — moving/renaming
 /// a file in Firestore never touches the Storage bytes.
-library firestore_schema;
+library;
 
 const String kFieldType = 'type';
 const String kFieldName = 'name';

@@ -1,6 +1,6 @@
 name: cloud_storage_gallery
 description: Drop-in Flutter widgets for browsing folders, viewing media, uploading with progress, and thumbnail generation on top of cloud_storage.
-version: 0.1.0
+version: 0.1.1
 
 homepage: https://github.com/rashidotm/flutter_shared_storage
 repository: https://github.com/rashidotm/flutter_shared_storage/tree/master/packages/cloud_storage_gallery
@@ -22,27 +22,27 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  cloud_storage_platform_interface: ^0.1.0
+  cloud_storage_platform_interface: ^0.1.1
   cached_network_image: ^3.4.1
   photo_view: ^0.15.0
   video_player: ^2.9.2
-  chewie: ^1.8.5
+  chewie: ^1.13.0
   flutter_cache_manager: ^3.4.1
   # Full-featured folder browser deps:
-  file_picker: ^8.1.2
-  share_plus: ^10.1.2
+  file_picker: ^11.0.0
+  share_plus: ^11.0.0
   image: ^4.3.0
   video_thumbnail: ^0.5.3
-  mime: ^1.0.6
+  mime: ^2.0.0
   path: ^1.9.0
-  path_provider: ^2.1.5
+  path_provider: ^2.1.6
   open_filex: ^4.5.0
   url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^4.0.0
+  flutter_lints: ^6.0.0
 
 dependency_overrides:
   cloud_storage_platform_interface:

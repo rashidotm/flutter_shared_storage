@@ -1,3 +1,15 @@
+# 0.1.1
+
+* **Firebase family major bump:** `firebase_core` `^4.0.0`,
+  `firebase_auth` `^6.0.0`, `firebase_storage` `^13.0.0`,
+  `cloud_firestore` `^6.0.0`. **Requires consumers to also bump their
+  Firebase deps together.**
+* `mime` bumped to `^2.0.0` (major).
+* `path_provider` `^2.1.6`, `meta` `^1.17.0`.
+* Sibling dep `cloud_storage_platform_interface` bumped to `^0.1.1`.
+* Removed unnecessary library-name declarations flagged by
+  `flutter_lints` v6.
+
 # 0.1.0
 
 Initial release.

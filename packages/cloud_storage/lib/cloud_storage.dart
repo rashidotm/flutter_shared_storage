@@ -2,7 +2,7 @@
 ///
 /// Umbrella package: re-exports the platform interface plus the default
 /// Firebase implementation, and provides a [defaultCloudStorage] factory.
-library cloud_storage;
+library;
 
 // `cloud_storage_firebase` already re-exports the platform interface, so
 // importing it here directly would be redundant. We still re-export it

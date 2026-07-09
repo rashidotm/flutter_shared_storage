@@ -1,3 +1,21 @@
+# 0.1.1
+
+* **`file_picker` bumped `^8` → `^11`.** API change: use
+  `FilePicker.pickFiles(...)` (static) instead of the removed
+  `FilePicker.platform.pickFiles(...)`. Package internals updated;
+  consumers using the gallery widgets don't need changes.
+* **`share_plus` bumped `^10` → `^11`.** API change: switched to
+  `SharePlus.instance.share(ShareParams(files: ..., subject: ...))`.
+  The legacy `Share.shareXFiles(...)` was deprecated. Only affects
+  the "open in external app" fallback flow.
+* `mime` bumped `^1` → `^2`.
+* `chewie` bumped `^1.8.5` → `^1.13.0`. Deliberately capped below 1.14
+  (which pulls in `win32 ^6` via `wakelock_plus 1.6+` and conflicts
+  with `share_plus <13` and `file_picker <12`).
+* `path_provider` `^2.1.6`.
+* Sibling dep `cloud_storage_platform_interface` bumped to `^0.1.1`.
+* Removed unnecessary library-name declaration.
+
 # 0.1.0
 
 Initial release. Ready-made Flutter widgets on top of `cloud_storage`.

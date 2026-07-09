@@ -310,7 +310,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
 
   Future<void> _uploadFile() async {
     final result =
-        await FilePicker.platform.pickFiles(allowMultiple: true);
+        await FilePicker.pickFiles(allowMultiple: true);
     if (result == null || result.files.isEmpty) return;
 
     // Filter out picks without a real filesystem path (some pickers can
@@ -520,9 +520,11 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
             // Fallback: hand the file to the OS share sheet so the user
             // can pick an app. Also gracefully handles the "no app
             // installed" case reported by open_filex on some devices.
-            await Share.shareXFiles(
-              [XFile(localFile.path, name: f.name)],
-              subject: f.name,
+            await SharePlus.instance.share(
+              ShareParams(
+                files: [XFile(localFile.path, name: f.name)],
+                subject: f.name,
+              ),
             );
           }
         },
@@ -538,9 +540,11 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
     );
     try {
       final localFile = await _storage.download(file.id);
-      await Share.shareXFiles(
-        [XFile(localFile.path, name: file.name)],
-        subject: file.name,
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(localFile.path, name: file.name)],
+          subject: file.name,
+        ),
       );
     } catch (e) {
       messenger.showSnackBar(
@@ -552,7 +556,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
   Future<void> _setThumbnail(CloudNode node) async {
     if (node is CloudFolder) return;
     final l10n = CloudGalleryLocalizations.of(context);
-    final result = await FilePicker.platform.pickFiles(type: FileType.image);
+    final result = await FilePicker.pickFiles(type: FileType.image);
     if (result == null || result.files.isEmpty) return;
     final pathStr = result.files.single.path;
     if (pathStr == null) return;

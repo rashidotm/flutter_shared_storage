@@ -1,5 +1,5 @@
 /// Firebase Storage + Firestore implementation of [CloudStorage].
-library cloud_storage_firebase;
+library;
 
 export 'package:cloud_storage_platform_interface/cloud_storage_platform_interface.dart';
 

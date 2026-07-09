@@ -1,6 +1,6 @@
 /// Ready-made widgets for browsing folders, viewing media, uploading with
 /// progress, and generating thumbnails on top of `cloud_storage`.
-library cloud_storage_gallery;
+library;
 
 export 'src/cloud_batch_upload_dialog.dart';
 export 'src/cloud_breadcrumb.dart';

@@ -1,3 +1,8 @@
+# 0.1.1
+
+* Bumped `meta` to `^1.17.0` and `cross_file` to `^0.3.5+2`.
+* Dev deps: `flutter_lints` `^6.0.0`, `test` `^1.31.0`.
+
 # 0.1.0
 
 Initial release.
