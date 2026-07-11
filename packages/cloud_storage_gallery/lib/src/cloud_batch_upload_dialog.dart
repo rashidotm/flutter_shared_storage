@@ -5,13 +5,14 @@ import 'package:flutter/material.dart';
 
 import 'localizations/cloud_gallery_localizations.dart';
 
-/// Progress dialog for a batch of concurrent uploads. Shows a single
-/// "X of N complete" progress bar and a cancel-all button.
+/// Progress dialog for a batch of concurrent uploads. Shows a total
+/// "X of N complete" bar at the top and a scrollable per-file list
+/// where each row renders its own byte-level progress bar and terminal
+/// state (success / cancelled / error).
 ///
 /// Pops itself when every task in [tasks] has reached a terminal state
-/// (success, canceled, or error). The Cancel button and the auto-pop are
-/// guarded with a single-fire flag so the underlying route isn't popped
-/// twice.
+/// (success, canceled, or error). The Cancel button cancels every
+/// not-yet-terminal task and then pops.
 class CloudBatchUploadDialog extends StatefulWidget {
   const CloudBatchUploadDialog({
     super.key,
@@ -34,30 +35,24 @@ class CloudBatchUploadDialog extends StatefulWidget {
 
 class _CloudBatchUploadDialogState extends State<CloudBatchUploadDialog> {
   final _subs = <StreamSubscription<UploadProgress>>[];
-
-  /// Count of tasks that have reached ANY terminal state (success, canceled,
-  /// or error). The dialog auto-pops when this equals `widget.tasks.length`.
-  int _completed = 0;
-
+  late final List<UploadProgress?> _last;
   bool _popped = false;
 
   @override
   void initState() {
     super.initState();
-    for (final task in widget.tasks) {
+    _last = List<UploadProgress?>.filled(widget.tasks.length, null);
+    for (var i = 0; i < widget.tasks.length; i++) {
+      final task = widget.tasks[i];
       // Prevent unhandled Future errors on individual tasks — the dialog
-      // only cares about progress. Errors are reflected in the completion
-      // count via the terminal progress event.
+      // only cares about progress.
       task.result.ignore();
       _subs.add(
         task.progress.listen((p) {
-          if (p.isTerminal) {
-            setState(() => _completed++);
-            if (_completed >= widget.tasks.length) {
-              WidgetsBinding.instance.addPostFrameCallback((_) => _popOnce());
-            }
-          } else {
-            setState(() {});
+          if (!mounted) return;
+          setState(() => _last[i] = p);
+          if (_last.every((v) => v != null && v.isTerminal)) {
+            WidgetsBinding.instance.addPostFrameCallback((_) => _popOnce());
           }
         }),
       );
@@ -78,20 +73,42 @@ class _CloudBatchUploadDialogState extends State<CloudBatchUploadDialog> {
     Navigator.of(context).pop();
   }
 
+  int get _completedCount =>
+      _last.where((p) => p != null && p.isTerminal).length;
+
   @override
   Widget build(BuildContext context) {
     final l10n = CloudGalleryLocalizations.of(context);
     final total = widget.tasks.length;
-    final fraction = total == 0 ? 0.0 : _completed / total;
+    final done = _completedCount;
+    final fraction = total == 0 ? 0.0 : done / total;
     return AlertDialog(
       title: Text(widget.title ?? l10n.uploadingTitle),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          LinearProgressIndicator(value: fraction),
-          const SizedBox(height: 8),
-          Text(l10n.bulkProgressLabel(_completed, total)),
-        ],
+      content: SizedBox(
+        width: double.maxFinite,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            LinearProgressIndicator(value: fraction),
+            const SizedBox(height: 8),
+            Text(l10n.bulkProgressLabel(done, total)),
+            const SizedBox(height: 12),
+            Flexible(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 260),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: total,
+                  itemBuilder: (context, i) => _UploadRow(
+                    task: widget.tasks[i],
+                    last: _last[i],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
       actions: [
         TextButton(
@@ -104,6 +121,54 @@ class _CloudBatchUploadDialogState extends State<CloudBatchUploadDialog> {
           child: Text(widget.cancelLabel ?? l10n.buttonCancel),
         ),
       ],
+    );
+  }
+}
+
+class _UploadRow extends StatelessWidget {
+  const _UploadRow({required this.task, required this.last});
+
+  final UploadTask task;
+  final UploadProgress? last;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final p = last;
+    // Byte progress is optional (total may be unknown early). Null means
+    // the bar renders indeterminate.
+    // Byte progress is optional — fraction is null when totalBytes is
+    // unknown (e.g. streaming source).
+    final byteFraction = p?.fraction;
+    final Widget leading = switch (p?.status) {
+      null => Icon(
+          Icons.radio_button_unchecked,
+          color: scheme.onSurfaceVariant,
+        ),
+      UploadStatus.running || UploadStatus.paused => const SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      UploadStatus.success => Icon(Icons.check_circle, color: scheme.primary),
+      UploadStatus.canceled => Icon(
+          Icons.cancel_outlined,
+          color: scheme.onSurfaceVariant,
+        ),
+      UploadStatus.error => Icon(Icons.error_outline, color: scheme.error),
+    };
+    return ListTile(
+      dense: true,
+      visualDensity: VisualDensity.compact,
+      leading: SizedBox(width: 24, height: 24, child: leading),
+      title: Text(
+        task.name,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      subtitle: p != null && p.status == UploadStatus.running
+          ? LinearProgressIndicator(value: byteFraction)
+          : null,
     );
   }
 }

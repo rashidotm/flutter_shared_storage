@@ -13,11 +13,15 @@ class FirebaseUploadTask implements UploadTask {
     required fbs.UploadTask storageTask,
     required DocumentReference<Map<String, dynamic>> nodeDoc,
     required Future<void> Function(fbs.TaskSnapshot snap) onSuccess,
+    required this.name,
   }) : _storageTask = storageTask,
        _nodeDoc = nodeDoc,
        _onSuccess = onSuccess {
     _wire();
   }
+
+  @override
+  final String name;
 
   final fbs.UploadTask _storageTask;
   final DocumentReference<Map<String, dynamic>> _nodeDoc;

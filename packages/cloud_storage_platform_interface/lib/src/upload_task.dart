@@ -10,5 +10,10 @@ abstract class UploadTask {
   /// Resolves with the created [CloudFile] on success, or throws on failure.
   Future<CloudFile> get result;
 
+  /// Human-readable filename for progress UIs. Defaults to an empty
+  /// string so existing implementations remain source-compatible;
+  /// backends should override with the actual filename.
+  String get name => '';
+
   Future<void> cancel();
 }

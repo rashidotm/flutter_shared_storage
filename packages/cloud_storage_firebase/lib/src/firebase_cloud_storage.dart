@@ -191,7 +191,7 @@ class FirebaseCloudStorage implements CloudStorage {
     Source? thumbnail,
     Source? preview,
   }) {
-    final controller = _DeferredUploadTask();
+    final controller = _DeferredUploadTask(name: name);
     unawaited(
       _startUpload(
         parentId: parentId,
@@ -269,6 +269,7 @@ class FirebaseCloudStorage implements CloudStorage {
         FirebaseUploadTask(
           storageTask: storageTask,
           nodeDoc: doc,
+          name: resolvedName,
           onSuccess: (snap) async {
             final url = await ref.getDownloadURL();
 
@@ -587,6 +588,11 @@ class FirebaseCloudStorage implements CloudStorage {
 /// Holds an [UploadTask] that's resolved asynchronously after some
 /// pre-upload work (name resolution, doc creation) completes.
 class _DeferredUploadTask implements UploadTask {
+  _DeferredUploadTask({required this.name});
+
+  @override
+  final String name;
+
   final _bound = Completer<UploadTask>();
   final _progress = StreamController<UploadProgress>.broadcast();
   final _result = Completer<CloudFile>();

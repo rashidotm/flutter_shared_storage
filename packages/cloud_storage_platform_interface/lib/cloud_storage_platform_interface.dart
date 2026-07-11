@@ -1,5 +1,5 @@
 /// Backend-agnostic contract for cloud file/folder storage.
-library cloud_storage_platform_interface;
+library;
 
 export 'src/cloud_storage.dart';
 export 'src/exceptions.dart';

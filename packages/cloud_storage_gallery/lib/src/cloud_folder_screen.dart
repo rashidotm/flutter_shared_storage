@@ -524,6 +524,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
       builder: (_) => CloudBulkProgressDialog<CloudFile>(
         title: l10n.openingTitle,
         items: [file],
+        itemLabel: (f) => f.name,
         operation: (f) async {
           final localFile = await _storage.download(f.id);
           final result = await OpenFilex.open(
@@ -588,6 +589,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
       builder: (_) => CloudBulkProgressDialog<CloudNode>(
         title: l10n.uploadingTitle,
         items: [node],
+        itemLabel: (n) => n.name,
         operation: (n) async {
           await _storage.setThumbnail(
             n.id,
@@ -733,6 +735,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
       builder: (_) => CloudBulkProgressDialog<CloudNode>(
         title: l10n.movingTitle,
         items: [node],
+        itemLabel: (n) => n.name,
         operation: (n) async {
           if (n is CloudFile) {
             await _storage.moveFile(n.id, newParentId: target);
@@ -828,6 +831,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
       builder: (_) => CloudBulkProgressDialog<CloudNode>(
         title: l10n.deletingTitle,
         items: [node],
+        itemLabel: (n) => n.name,
         operation: (n) async {
           if (n is CloudFile) {
             await _storage.deleteFile(n.id);
@@ -871,6 +875,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
       builder: (_) => CloudBulkProgressDialog<CloudNode>(
         title: l10n.deletingTitle,
         items: nodes,
+        itemLabel: (n) => n.name,
         operation: (node) async {
           if (node is CloudFile) {
             await _storage.deleteFile(node.id);
@@ -915,6 +920,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
       builder: (_) => CloudBulkProgressDialog<CloudNode>(
         title: l10n.movingTitle,
         items: toMove,
+        itemLabel: (n) => n.name,
         operation: (node) async {
           if (node is CloudFile) {
             await _storage.moveFile(node.id, newParentId: target);
