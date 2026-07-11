@@ -188,38 +188,40 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
         onNodeToggleSelection: widget.readOnly ? null : _toggleSelection,
       ),
       ),
-      floatingActionButton: (widget.readOnly || _inSelectionMode)
+      floatingActionButton: widget.readOnly
           ? null
-          : Wrap(
-              direction: Axis.horizontal,
-              spacing: 8,
-              children: [
-                FloatingActionButton(
-                  heroTag: 'select',
-                  tooltip: l10n.menuSelect,
-                  onPressed: () => _enterSelection(),
-                  child: const Icon(Icons.checklist),
+          : _inSelectionMode
+              ? _buildSelectionFabs(l10n)
+              : Wrap(
+                  direction: Axis.horizontal,
+                  spacing: 8,
+                  children: [
+                    FloatingActionButton(
+                      heroTag: 'select',
+                      tooltip: l10n.menuSelect,
+                      onPressed: () => _enterSelection(),
+                      child: const Icon(Icons.checklist),
+                    ),
+                    FloatingActionButton(
+                      heroTag: 'newFolder',
+                      tooltip: l10n.createFolderTooltip,
+                      onPressed: _createFolder,
+                      child: const Icon(Icons.create_new_folder),
+                    ),
+                    FloatingActionButton(
+                      heroTag: 'addLink',
+                      tooltip: l10n.addLinkTooltip,
+                      onPressed: _createLink,
+                      child: const Icon(Icons.add_link),
+                    ),
+                    FloatingActionButton(
+                      heroTag: 'upload',
+                      tooltip: l10n.uploadFileTooltip,
+                      onPressed: _uploadFile,
+                      child: const Icon(Icons.note_add_outlined),
+                    ),
+                  ],
                 ),
-                FloatingActionButton(
-                  heroTag: 'newFolder',
-                  tooltip: l10n.createFolderTooltip,
-                  onPressed: _createFolder,
-                  child: const Icon(Icons.create_new_folder),
-                ),
-                FloatingActionButton(
-                  heroTag: 'addLink',
-                  tooltip: l10n.addLinkTooltip,
-                  onPressed: _createLink,
-                  child: const Icon(Icons.add_link),
-                ),
-                FloatingActionButton(
-                  heroTag: 'upload',
-                  tooltip: l10n.uploadFileTooltip,
-                  onPressed: _uploadFile,
-                  child: const Icon(Icons.note_add_outlined),
-                ),
-              ],
-            ),
     );
   }
 
@@ -258,25 +260,37 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
   }
 
   PreferredSizeWidget _buildSelectionAppBar(CloudGalleryLocalizations l10n) {
-    // Disable bulk actions when there's nothing selected — user's just
-    // entered selection mode via the FAB and hasn't picked anything yet.
-    final hasSelection = _selected.isNotEmpty;
+    // Actions (move, delete) live in the FAB slot in selection mode — see
+    // [_buildSelectionFabs]. The AppBar stays informational only.
     return AppBar(
       leading: IconButton(
         icon: const Icon(Icons.close),
         onPressed: _clearSelection,
       ),
       title: Text(l10n.selectionCountLabel(_selected.length)),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.drive_file_move),
+    );
+  }
+
+  // Bulk-action FABs that take over the FAB slot while selection mode is
+  // active. Placed exactly where the browse-mode FABs sat, so the user's
+  // thumb doesn't have to reach for the app bar after a long-press.
+  Widget _buildSelectionFabs(CloudGalleryLocalizations l10n) {
+    final hasSelection = _selected.isNotEmpty;
+    return Wrap(
+      direction: Axis.horizontal,
+      spacing: 8,
+      children: [
+        FloatingActionButton(
+          heroTag: 'bulkMove',
           tooltip: l10n.menuMoveTo,
           onPressed: hasSelection ? _bulkMove : null,
+          child: const Icon(Icons.drive_file_move),
         ),
-        IconButton(
-          icon: const Icon(Icons.delete_outline),
+        FloatingActionButton(
+          heroTag: 'bulkDelete',
           tooltip: l10n.menuDelete,
           onPressed: hasSelection ? _bulkDelete : null,
+          child: const Icon(Icons.delete_outline),
         ),
       ],
     );
