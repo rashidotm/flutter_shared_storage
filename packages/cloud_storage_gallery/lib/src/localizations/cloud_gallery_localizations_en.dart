@@ -105,6 +105,9 @@ class CloudGalleryLocalizationsEn extends CloudGalleryLocalizations {
 
   @override
   String get uploadingTitle => 'Uploading';
+
+  @override
+  String get preparingUploadsTitle => 'Preparing files';
   @override
   String get deletingTitle => 'Deleting';
   @override

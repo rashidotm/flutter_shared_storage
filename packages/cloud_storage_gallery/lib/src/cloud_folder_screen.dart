@@ -323,6 +323,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
   }
 
   Future<void> _uploadFile() async {
+    final l10n = CloudGalleryLocalizations.of(context);
     final result =
         await FilePicker.pickFiles(allowMultiple: true);
     if (result == null || result.files.isEmpty) return;
@@ -332,32 +333,57 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
     final picked = result.files
         .where((f) => f.path != null)
         .toList(growable: false);
-    if (picked.isEmpty) return;
+    if (picked.isEmpty || !mounted) return;
 
+    // Phase 1: generate thumbnails per file. Runs while a per-item
+    // progress dialog is on screen — without this, large batches would
+    // block for several seconds after the picker closed with no
+    // feedback. Thumbnails are collected side-by-side with the source
+    // file so phase 2 has everything it needs.
+    final prepared = <_PreparedUpload>[];
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => CloudBulkProgressDialog<PlatformFile>(
+        title: l10n.preparingUploadsTitle,
+        items: picked,
+        itemLabel: (f) => f.name,
+        operation: (entry) async {
+          final file = File(entry.path!);
+          // Returns null for non-media types (PDFs, docs, etc.) — those
+          // upload without variants.
+          final thumbnails = await generateThumbnails(file);
+          prepared.add(_PreparedUpload(entry, file, thumbnails));
+        },
+      ),
+    );
+
+    if (!mounted || prepared.isEmpty) return;
+
+    // Phase 2: kick off upload tasks and show the batch upload dialog.
+    // Uploads only start now, so a cancel in phase 1 never leaves
+    // half-started uploads dangling.
     final tasks = <UploadTask>[];
-    for (final entry in picked) {
-      final file = File(entry.path!);
-      // Generate thumbnails client-side. Returns null for non-media types
-      // (PDFs, docs, etc.) — those upload without variants.
-      final thumbnails = await generateThumbnails(file);
+    for (final entry in prepared) {
       final task = _storage.upload(
         parentId: widget.folderId,
-        name: entry.name,
-        source: FileSource(file),
-        thumbnail:
-            thumbnails == null ? null : BytesSource(thumbnails.thumb),
-        preview:
-            thumbnails == null ? null : BytesSource(thumbnails.preview),
+        name: entry.picked.name,
+        source: FileSource(entry.file),
+        thumbnail: entry.thumbnails == null
+            ? null
+            : BytesSource(entry.thumbnails!.thumb),
+        preview: entry.thumbnails == null
+            ? null
+            : BytesSource(entry.thumbnails!.preview),
       );
-      // We only use `task.progress` for UI. If a user cancels,
-      // `task.result` completes with an error; without a listener that
-      // becomes an unhandled zone error and Flutter treats it as a
-      // crash. `.ignore()` attaches a no-op handler that absorbs it.
+      // If a user cancels, `task.result` completes with an error;
+      // without a listener that becomes an unhandled zone error and
+      // Flutter treats it as a crash. `.ignore()` attaches a no-op
+      // handler that absorbs it.
       task.result.ignore();
       tasks.add(task);
     }
 
-    if (!mounted) return;
     unawaited(
       showDialog<void>(
         context: context,
@@ -978,4 +1004,15 @@ class _MediaViewerScaffoldState extends State<_MediaViewerScaffold> {
       ),
     );
   }
+}
+
+/// Package-private wrapper carrying a picked entry together with its
+/// generated thumbnails, so the upload phase doesn't have to redo the
+/// thumbnail work.
+class _PreparedUpload {
+  const _PreparedUpload(this.picked, this.file, this.thumbnails);
+
+  final PlatformFile picked;
+  final File file;
+  final MediaThumbnails? thumbnails;
 }

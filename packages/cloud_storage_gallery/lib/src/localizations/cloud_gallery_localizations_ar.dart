@@ -104,6 +104,9 @@ class CloudGalleryLocalizationsAr extends CloudGalleryLocalizations {
 
   @override
   String get uploadingTitle => 'جارٍ الرفع';
+
+  @override
+  String get preparingUploadsTitle => 'جارٍ تحضير الملفات';
   @override
   String get deletingTitle => 'جارٍ الحذف';
   @override

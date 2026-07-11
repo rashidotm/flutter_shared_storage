@@ -145,6 +145,12 @@ abstract class CloudGalleryLocalizations {
 
   String get uploadingTitle;
 
+  /// Dialog title shown BEFORE uploads start, while the gallery is
+  /// generating thumbnails and preparing each file. On large batches
+  /// this phase can take a few seconds per file — without a dialog the
+  /// user would see nothing after picking files.
+  String get preparingUploadsTitle;
+
   /// AppBar / dialog title for bulk delete progress.
   String get deletingTitle;
 
