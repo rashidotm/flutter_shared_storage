@@ -1,3 +1,11 @@
+# 0.1.2
+
+* Implements the new `UploadTask.name` accessor from
+  `cloud_storage_platform_interface` 0.1.2. Both `FirebaseUploadTask`
+  and the pre-bind wrapper `_DeferredUploadTask` now carry the
+  resolved filename through, so progress dialogs can render it.
+* Sibling dep `cloud_storage_platform_interface` bumped to `^0.1.2`.
+
 # 0.1.1
 
 * **Firebase family major bump:** `firebase_core` `^4.0.0`,

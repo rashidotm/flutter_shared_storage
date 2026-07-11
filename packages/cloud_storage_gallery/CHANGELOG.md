@@ -1,3 +1,36 @@
+# 0.1.2
+
+Selection & progress polish.
+
+* **Selection-mode UI moved to the FAB slot.** Bulk Move-To and Bulk
+  Delete used to live as `AppBar` actions. They're now
+  `FloatingActionButton`s in the same position the browse-mode FABs
+  occupied, so the user's thumb doesn't have to jump to the top of
+  the screen after a long-press.
+* **Per-item progress in bulk operations.** Both `CloudBulkProgressDialog`
+  (deletes / moves) and `CloudBatchUploadDialog` now render a
+  scrollable list of items under the total progress bar. Each row
+  shows its own state icon (pending / running / done / failed).
+  Upload rows also show byte-level progress bars while a file is
+  streaming.
+* **Two-phase upload flow.** After the file picker closes, a
+  "Preparing files" dialog now shows per-file progress during
+  thumbnail generation. On large batches this used to be a silent
+  multi-second gap before the upload dialog appeared. Uploads only
+  start after all thumbnails are ready, so a cancel during the
+  prep phase is a clean cancel.
+* **BREAKING (`CloudBulkProgressDialog`):** the constructor now
+  requires an `itemLabel: (T) => String` callback so the dialog can
+  render each item's display name in the list. If you use this
+  widget directly, add `itemLabel: (item) => item.name` (or any
+  identifier your item type exposes).
+
+Also:
+
+* `CloudFolderScreen` gained a new `preparingUploadsTitle`
+  localization slot (EN / AR provided).
+* Sibling dep `cloud_storage_platform_interface` bumped to `^0.1.2`.
+
 # 0.1.1
 
 * **`file_picker` bumped `^8` → `^11`.** API change: use

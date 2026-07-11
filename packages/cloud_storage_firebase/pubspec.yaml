@@ -1,6 +1,6 @@
 name: cloud_storage_firebase
 description: Firebase Storage + Cloud Firestore implementation of cloud_storage_platform_interface. Caller-supplied paths, no uid assumption.
-version: 0.1.1
+version: 0.1.2
 
 homepage: https://github.com/rashidotm/flutter_shared_storage
 repository: https://github.com/rashidotm/flutter_shared_storage/tree/master/packages/cloud_storage_firebase
@@ -20,7 +20,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  cloud_storage_platform_interface: ^0.1.1
+  cloud_storage_platform_interface: ^0.1.2
   firebase_core: ^4.0.0
   firebase_auth: ^6.0.0
   firebase_storage: ^13.0.0

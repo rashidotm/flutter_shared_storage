@@ -1,3 +1,9 @@
+# 0.1.2
+
+* New `UploadTask.name` getter for progress UIs. Defaults to an empty
+  string on the abstract class, so existing implementations remain
+  source-compatible — backends should override with the actual filename.
+
 # 0.1.1
 
 * Bumped `meta` to `^1.17.0` and `cross_file` to `^0.3.5+2`.

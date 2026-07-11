@@ -1,6 +1,6 @@
 name: cloud_storage
 description: Cloud file/folder/link storage for Flutter — umbrella package re-exporting the interface and the default Firebase implementation.
-version: 0.1.1
+version: 0.1.2
 
 homepage: https://github.com/rashidotm/flutter_shared_storage
 repository: https://github.com/rashidotm/flutter_shared_storage/tree/master/packages/cloud_storage
@@ -19,8 +19,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  cloud_storage_platform_interface: ^0.1.1
-  cloud_storage_firebase: ^0.1.1
+  cloud_storage_platform_interface: ^0.1.2
+  cloud_storage_firebase: ^0.1.2
 
 dev_dependencies:
   flutter_test:

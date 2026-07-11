@@ -1,3 +1,8 @@
+# 0.1.2
+
+* Bumped sibling dep constraints to `^0.1.2` to pick up
+  `UploadTask.name` from the interface and its Firebase impl.
+
 # 0.1.1
 
 * Bumped sibling dep constraints to `^0.1.1`
