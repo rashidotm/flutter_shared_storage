@@ -45,3 +45,10 @@ dev_dependencies:
 dependency_overrides:
   cloud_storage_platform_interface:
     path: ../cloud_storage_platform_interface
+  # cloud_firestore 6.7.0 changed WriteBatch.update to a generic
+  # signature that the latest fake_cloud_firestore (4.1.1) doesn't
+  # match — compilation fails in tests. Pin to <6.7.0 in the
+  # workspace only; published consumers keep the ^6.0.0 range from
+  # `dependencies:` above. Remove once fake_cloud_firestore ships a
+  # compatible release.
+  cloud_firestore: ">=6.0.0 <6.7.0"
