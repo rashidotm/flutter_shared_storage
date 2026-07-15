@@ -45,11 +45,12 @@ class ExampleApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      // A consumer-supplied AppBar demonstrates the new `appBar` slot;
-      // the widget renders its own `CloudPathBar` beneath it.
-      home: CloudFolderScreen(
-        storage: storage,
+      // CloudFolderScreen is not a Scaffold — wrap it in your own to
+      // supply the AppBar, the SnackBar host, etc. The path bar and
+      // the FABs come from the widget itself.
+      home: Scaffold(
         appBar: AppBar(title: const Text('cloud_storage example')),
+        body: CloudFolderScreen(storage: storage),
       ),
     );
   }

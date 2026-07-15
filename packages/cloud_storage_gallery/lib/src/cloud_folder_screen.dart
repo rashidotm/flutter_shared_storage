@@ -20,28 +20,33 @@ import 'thumbnail_generator.dart';
 
 /// A ready-to-use, full-featured folder browser backed by [CloudStorage].
 ///
-/// The widget is **self-navigating**: tapping a subfolder does NOT push
-/// a new route — it updates the current folder in place. Use the [appBar]
-/// slot to supply your own app bar (title, actions, etc.); the widget
-/// renders its own [CloudPathBar] beneath it that shows the current path
-/// plus back / up navigation buttons.
+/// **Embeddable, not a page.** The widget is not a `Scaffold` and does
+/// not host `ScaffoldMessenger` snackbars itself — put it anywhere in
+/// your widget tree. Wrap it in your own `Scaffold` when using it as a
+/// top-level screen; drop it inside a tab, a split-view pane, or a
+/// sheet without wrapping.
+///
+/// **Self-navigating.** Tapping a subfolder does NOT push a new route
+/// — it updates the current folder in place. An internal history stack
+/// backs the [CloudPathBar]'s back button, and the OS back button is
+/// intercepted via `PopScope` to walk that history before propagating
+/// to the outer navigator.
 ///
 /// Ships with everything a typical file-manager screen needs:
 ///
-///   * Consumer-supplied AppBar (via [appBar])
+///   * Optional in-body AppBar via [appBar]
 ///   * Path bar beneath the AppBar — current path + back/up buttons
 ///   * Grid of subfolders + files (with thumbnails when available)
 ///   * Long-press context menu — Open, Download, Rename, Move to…, Info,
 ///     Delete
-///   * FABs — Create folder, Upload file (client-side thumbnails included
-///     for images/videos)
+///   * FABs — Select / Create folder / Add link / Upload, positioned
+///     bottom-end via a `Stack` overlay (no Scaffold slot needed)
 ///   * Upload progress dialog with a Cancel button
 ///
-/// Drop it into a `MaterialApp` as the home widget. If you want a
-/// different UX, build your own screen using the lower-level widgets
-/// ([CloudFolderGrid], [CloudPathBar], [CloudFolderBreadcrumb],
-/// [CloudMediaViewer], [CloudUploadDialog], [pickCloudFolder],
-/// [generateThumbnails]).
+/// If you want a completely different UX, build your own screen using
+/// the lower-level widgets ([CloudFolderGrid], [CloudPathBar],
+/// [CloudFolderBreadcrumb], [CloudMediaViewer], [CloudUploadDialog],
+/// [pickCloudFolder], [generateThumbnails]).
 class CloudFolderScreen extends StatefulWidget {
   const CloudFolderScreen({
     super.key,
@@ -276,15 +281,15 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
           _goBack();
         }
       },
-      child: Scaffold(
-      appBar: widget.appBar,
-      // SafeArea keeps the grid clear of gesture bars, curved edges, and
-      // any other system-decoration insets. When the consumer provided
-      // an AppBar it already covers the top; otherwise we need it here.
-      body: SafeArea(
+      // Not a Scaffold — the widget is embeddable. Consumers wrap it in
+      // their own Scaffold (or don't) as they see fit. SnackBars still
+      // work as long as a ScaffoldMessenger is available higher up
+      // (MaterialApp provides one by default).
+      child: SafeArea(
         top: widget.appBar == null,
         child: Column(
           children: [
+            if (widget.appBar != null) widget.appBar!,
             // Top-of-body chrome: path bar in browse mode, selection
             // header in selection mode. Same slot — swapping avoids
             // shifting the grid.
@@ -301,72 +306,89 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
                   ),
             const Divider(height: 1),
             Expanded(
-              child: CloudFolderGrid(
-                storage: _storage,
-                folderId: _currentFolderId,
-                onFolderTap: _openSubfolder,
-                onFileTap: (file, mediaSiblings) {
-                  if (file.isMedia) {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => _MediaViewerScaffold(
-                          files: mediaSiblings,
-                          initialIndex: mediaSiblings.indexOf(file),
-                        ),
-                      ),
-                    );
-                    return;
-                  }
-                  // Non-media (PDF, docs, etc.): download + hand off to the OS.
-                  _openFileExternally(file);
-                },
-                onLinkTap: _openLink,
-                onNodeLongPress: (node, details) =>
-                    _showNodeMenu(node, details.globalPosition),
-                selectionMode: _selectionActive,
-                selectedNodeIds: _selected.keys.toSet(),
-                onNodeToggleSelection:
-                    widget.readOnly ? null : _toggleSelection,
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: CloudFolderGrid(
+                      storage: _storage,
+                      folderId: _currentFolderId,
+                      onFolderTap: _openSubfolder,
+                      onFileTap: (file, mediaSiblings) {
+                        if (file.isMedia) {
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => _MediaViewerScaffold(
+                                files: mediaSiblings,
+                                initialIndex: mediaSiblings.indexOf(file),
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+                        // Non-media (PDF, docs, etc.): download + hand off
+                        // to the OS.
+                        _openFileExternally(file);
+                      },
+                      onLinkTap: _openLink,
+                      onNodeLongPress: (node, details) =>
+                          _showNodeMenu(node, details.globalPosition),
+                      selectionMode: _selectionActive,
+                      selectedNodeIds: _selected.keys.toSet(),
+                      onNodeToggleSelection:
+                          widget.readOnly ? null : _toggleSelection,
+                    ),
+                  ),
+                  // FABs positioned bottom-end of the grid area — same
+                  // visual position as Scaffold's endFloat FAB slot, but
+                  // no Scaffold needed. Directional so it flips in RTL.
+                  if (!widget.readOnly)
+                    PositionedDirectional(
+                      bottom: 16,
+                      end: 16,
+                      child: _inSelectionMode
+                          ? _buildSelectionFabs(l10n)
+                          : _buildBrowseFabs(l10n),
+                    ),
+                ],
               ),
             ),
           ],
         ),
       ),
-      floatingActionButton: widget.readOnly
-          ? null
-          : _inSelectionMode
-              ? _buildSelectionFabs(l10n)
-              : Wrap(
-                  direction: Axis.horizontal,
-                  spacing: 8,
-                  children: [
-                    FloatingActionButton(
-                      heroTag: 'select',
-                      tooltip: l10n.menuSelect,
-                      onPressed: () => _enterSelection(),
-                      child: const Icon(Icons.checklist),
-                    ),
-                    FloatingActionButton(
-                      heroTag: 'newFolder',
-                      tooltip: l10n.createFolderTooltip,
-                      onPressed: _createFolder,
-                      child: const Icon(Icons.create_new_folder),
-                    ),
-                    FloatingActionButton(
-                      heroTag: 'addLink',
-                      tooltip: l10n.addLinkTooltip,
-                      onPressed: _createLink,
-                      child: const Icon(Icons.add_link),
-                    ),
-                    FloatingActionButton(
-                      heroTag: 'upload',
-                      tooltip: l10n.uploadFileTooltip,
-                      onPressed: _uploadFile,
-                      child: const Icon(Icons.note_add_outlined),
-                    ),
-                  ],
-                ),
-      ),
+    );
+  }
+
+  /// Browse-mode FAB cluster — Select / New folder / Add link / Upload.
+  Widget _buildBrowseFabs(CloudGalleryLocalizations l10n) {
+    return Wrap(
+      direction: Axis.horizontal,
+      spacing: 8,
+      children: [
+        FloatingActionButton(
+          heroTag: 'select',
+          tooltip: l10n.menuSelect,
+          onPressed: () => _enterSelection(),
+          child: const Icon(Icons.checklist),
+        ),
+        FloatingActionButton(
+          heroTag: 'newFolder',
+          tooltip: l10n.createFolderTooltip,
+          onPressed: _createFolder,
+          child: const Icon(Icons.create_new_folder),
+        ),
+        FloatingActionButton(
+          heroTag: 'addLink',
+          tooltip: l10n.addLinkTooltip,
+          onPressed: _createLink,
+          child: const Icon(Icons.add_link),
+        ),
+        FloatingActionButton(
+          heroTag: 'upload',
+          tooltip: l10n.uploadFileTooltip,
+          onPressed: _uploadFile,
+          child: const Icon(Icons.note_add_outlined),
+        ),
+      ],
     );
   }
 

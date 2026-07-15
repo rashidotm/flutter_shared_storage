@@ -1,3 +1,36 @@
+# 0.3.0
+
+**Breaking:** `CloudFolderScreen` is no longer a `Scaffold`.
+
+The widget is now embeddable — put it inside a tab, a split-view
+pane, a bottom sheet, or your own `Scaffold` as needed.
+
+Consequences:
+
+* If you were using `CloudFolderScreen` as the direct `home:` of a
+  `MaterialApp`, wrap it in a `Scaffold`:
+  ```dart
+  // Before
+  home: CloudFolderScreen(storage: storage, appBar: AppBar(...));
+
+  // After
+  home: Scaffold(
+    appBar: AppBar(...),
+    body: CloudFolderScreen(storage: storage),
+  );
+  ```
+* `ScaffoldMessenger.of(context)` inside your callbacks now inherits
+  from the ancestor `Scaffold` (or `MaterialApp`'s default), not from
+  ours. SnackBars still work if any of those is present.
+* FABs moved from `Scaffold.floatingActionButton` into a
+  `Stack` + `PositionedDirectional` overlay inside the widget's own
+  body. Same visual bottom-end placement; no external Scaffold slot
+  consumed.
+
+The `appBar:` slot is retained for the "embed with a section-scoped
+top bar" case (tabs, etc.) — it now renders as the first child of
+the internal `Column`.
+
 # 0.2.0
 
 Structural rework of `CloudFolderScreen`. Direct users of the widget
