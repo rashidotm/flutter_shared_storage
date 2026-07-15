@@ -20,6 +20,12 @@ scripts:
     run: melos exec -- "dart analyze ."
     description: Run dart analyze in every package.
 
+  analyze-ci:
+    run: melos exec --no-private -- "dart analyze ."
+    description: Analyze published packages only — skips the example
+      app, which imports the gitignored `firebase_options.dart` and
+      cannot be analyzed on a fresh CI checkout.
+
   format:
     run: melos exec -- "dart format ."
     description: Format every package.
@@ -31,6 +37,11 @@ scripts:
   test:
     run: melos exec --dir-exists=test -- "flutter test"
     description: Run tests in every package that has a test/ directory.
+
+  test-ci:
+    run: melos exec --dir-exists=test --no-private -- "flutter test"
+    description: Test published packages only — skips the example app
+      for the same reason as `analyze-ci`.
 
   build_runner:
     run: melos exec --depends-on=build_runner -- "dart run build_runner build --delete-conflicting-outputs"

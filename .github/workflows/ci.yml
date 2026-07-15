@@ -16,6 +16,9 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
+          # Pinned to match local dev to avoid Dart-version drift
+          # breaking fake_cloud_firestore's type overrides.
+          flutter-version: '3.41.1'
           channel: stable
           cache: true
 
@@ -31,7 +34,7 @@ jobs:
         run: melos bootstrap
 
       - name: Analyze
-        run: melos run analyze
+        run: melos run analyze-ci
 
       - name: Format check
         run: melos run format-check
@@ -45,6 +48,9 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
+          # Pinned to match local dev to avoid Dart-version drift
+          # breaking fake_cloud_firestore's type overrides.
+          flutter-version: '3.41.1'
           channel: stable
           cache: true
 
@@ -55,4 +61,4 @@ jobs:
         run: melos bootstrap
 
       - name: Run test suite
-        run: melos run test
+        run: melos run test-ci

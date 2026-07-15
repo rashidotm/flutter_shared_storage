@@ -44,6 +44,12 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
 
+flutter:
+  # `chewie` (transitive) sets uses-material-design: true. Not
+  # opting-in on our side surfaces a pub warning that CI treats as
+  # an error.
+  uses-material-design: true
+
 dependency_overrides:
   cloud_storage_platform_interface:
     path: ../cloud_storage_platform_interface

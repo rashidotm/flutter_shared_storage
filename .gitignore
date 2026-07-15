@@ -41,8 +41,11 @@ functions/.runtimeconfig.json
 # Coverage
 coverage/
 
-# Melos
+# Melos — pubspec_overrides.yaml is regenerated per-machine by
+# `melos bootstrap` with platform-native paths, so committing it makes
+# other OSes fail (Windows backslashes break Linux CI, etc.).
 .melos_tool/
+pubspec_overrides.yaml
 
 # Claude Code (per-user local overrides — settings.json can still be committed).
 .claude/settings.local.json
