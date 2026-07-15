@@ -9,6 +9,7 @@ export 'src/cloud_folder_grid.dart';
 export 'src/cloud_folder_picker.dart';
 export 'src/cloud_folder_screen.dart';
 export 'src/cloud_media_viewer.dart';
+export 'src/cloud_path_bar.dart';
 export 'src/cloud_upload_dialog.dart';
 export 'src/localizations/cloud_gallery_localizations.dart';
 export 'src/localizations/cloud_gallery_localizations_ar.dart';

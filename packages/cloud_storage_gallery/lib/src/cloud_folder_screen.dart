@@ -9,20 +9,27 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'cloud_batch_upload_dialog.dart';
-import 'cloud_breadcrumb.dart';
 import 'cloud_bulk_progress_dialog.dart';
 import 'cloud_folder_grid.dart';
 import 'cloud_folder_picker.dart';
 import 'cloud_media_viewer.dart';
+import 'cloud_path_bar.dart';
 import 'cloud_upload_dialog.dart';
 import 'localizations/cloud_gallery_localizations.dart';
 import 'thumbnail_generator.dart';
 
 /// A ready-to-use, full-featured folder browser backed by [CloudStorage].
 ///
+/// The widget is **self-navigating**: tapping a subfolder does NOT push
+/// a new route — it updates the current folder in place. Use the [appBar]
+/// slot to supply your own app bar (title, actions, etc.); the widget
+/// renders its own [CloudPathBar] beneath it that shows the current path
+/// plus back / up navigation buttons.
+///
 /// Ships with everything a typical file-manager screen needs:
 ///
-///   * Breadcrumb in the app bar
+///   * Consumer-supplied AppBar (via [appBar])
+///   * Path bar beneath the AppBar — current path + back/up buttons
 ///   * Grid of subfolders + files (with thumbnails when available)
 ///   * Long-press context menu — Open, Download, Rename, Move to…, Info,
 ///     Delete
@@ -30,30 +37,41 @@ import 'thumbnail_generator.dart';
 ///     for images/videos)
 ///   * Upload progress dialog with a Cancel button
 ///
-/// Drop it into a `MaterialApp` as the home widget. If you want a different
-/// UX, build your own screen using the lower-level widgets
-/// ([CloudFolderGrid], [CloudFolderBreadcrumb], [CloudMediaViewer],
-/// [CloudUploadDialog], [pickCloudFolder], [generateThumbnails]).
+/// Drop it into a `MaterialApp` as the home widget. If you want a
+/// different UX, build your own screen using the lower-level widgets
+/// ([CloudFolderGrid], [CloudPathBar], [CloudFolderBreadcrumb],
+/// [CloudMediaViewer], [CloudUploadDialog], [pickCloudFolder],
+/// [generateThumbnails]).
 class CloudFolderScreen extends StatefulWidget {
   const CloudFolderScreen({
     super.key,
     required this.storage,
     this.folderId = kRootFolderId,
     this.initialChain,
+    this.appBar,
     this.rootLabel,
     this.readOnly = false,
   });
 
   final CloudStorage storage;
+
+  /// The folder to start on. The screen then manages its own internal
+  /// navigation (folder taps, back, up) without pushing routes.
   final String folderId;
 
-  /// Ancestor chain (root → ... → current). When null, the breadcrumb
-  /// self-loads on first show — used for deep-links / cold start.
+  /// Ancestor chain (root → ... → [folderId]) as a cold-start hint.
+  /// When null, the chain is fetched on first show.
   final List<CloudNode>? initialChain;
 
-  /// Label shown for the root folder in breadcrumbs. When null, the
-  /// localized default (`CloudGalleryLocalizations.of(context).rootLabel`)
-  /// is used.
+  /// Optional AppBar to render above the built-in path bar. Consumers
+  /// wire this to whatever they need — title, theme actions, back to
+  /// their outer navigator. Passing null renders the widget without an
+  /// AppBar (the path bar becomes the top of the screen).
+  final PreferredSizeWidget? appBar;
+
+  /// Label shown for the root folder in the path bar breadcrumb. When
+  /// null, the localized default (`CloudGalleryLocalizations.of(context)
+  /// .rootLabel`) is used.
   final String? rootLabel;
 
   /// When true, hides the write-oriented UI:
@@ -75,12 +93,23 @@ class CloudFolderScreen extends StatefulWidget {
 class _CloudFolderScreenState extends State<CloudFolderScreen> {
   CloudStorage get _storage => widget.storage;
 
-  /// Chain known for THIS screen. Passed down to child screens so their
-  /// breadcrumb renders synchronously without a fetch.
-  late final List<CloudNode>? _chain = widget.initialChain ??
+  /// Folder currently in view. Mutated by [_navigateTo] — replaces the
+  /// pre-refactor pattern of pushing a new route per folder.
+  late String _currentFolderId = widget.folderId;
+
+  /// Ancestor chain (root → ... → current). Kept in sync with
+  /// [_currentFolderId] by [_navigateTo]. Nullable to signal "not yet
+  /// loaded" during the first fetch.
+  late List<CloudNode>? _chain = widget.initialChain ??
       (widget.folderId == kRootFolderId
           ? <CloudNode>[_syntheticRoot()]
           : null);
+
+  /// Internal navigation history for the path bar's back button. Each
+  /// entry is a snapshot of `_chain` — never just an id — so going back
+  /// restores the chain without a refetch. Stack behavior: most recent
+  /// on the end.
+  final List<List<CloudNode>> _history = <List<CloudNode>>[];
 
   static CloudFolder _syntheticRoot() => CloudFolder(
         id: kRootFolderId,
@@ -90,6 +119,105 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
         createdAt: DateTime.fromMillisecondsSinceEpoch(0),
         updatedAt: DateTime.fromMillisecondsSinceEpoch(0),
       );
+
+  @override
+  void initState() {
+    super.initState();
+    // If the caller landed us on a non-root folder without an
+    // initialChain, resolve it once so the path bar can render the full
+    // path. Fire-and-forget — the path bar shows the root as a
+    // placeholder in the meantime.
+    if (_chain == null) {
+      _loadChainFor(_currentFolderId);
+    }
+  }
+
+  Future<void> _loadChainFor(String folderId) async {
+    try {
+      if (folderId == kRootFolderId) {
+        final root = await _storage.getNode(kRootFolderId);
+        if (!mounted || _currentFolderId != folderId) return;
+        setState(() => _chain = <CloudNode>[root]);
+        return;
+      }
+      final tail = <CloudNode>[];
+      var current = await _storage.getNode(folderId);
+      tail.add(current);
+      while (current.parentId.isNotEmpty) {
+        current = await _storage.getNode(current.parentId);
+        tail.add(current);
+      }
+      final root = await _storage.getNode(kRootFolderId);
+      if (!mounted || _currentFolderId != folderId) return;
+      setState(() => _chain = <CloudNode>[root, ...tail.reversed]);
+    } catch (_) {
+      // Best-effort: leave _chain null if we can't resolve. Path bar
+      // still renders the root placeholder — no user-facing crash.
+    }
+  }
+
+  // ── Internal navigation ─────────────────────────────────────────────────
+
+  /// Push [newChain] onto the history and jump to its tail folder.
+  /// Selection is always cleared — carrying selected IDs from folder A
+  /// into folder B is confusing (they're not visible in the new grid).
+  void _navigateTo(List<CloudNode> newChain) {
+    final currentChain = _chain;
+    if (currentChain != null) {
+      _history.add(currentChain);
+    }
+    setState(() {
+      _chain = newChain;
+      _currentFolderId = newChain.last.id;
+      _selectionActive = false;
+      _selected.clear();
+    });
+  }
+
+  /// Enter a subfolder. The chain is extended by one — fast path, no
+  /// refetch.
+  void _openSubfolder(CloudFolder folder) {
+    final currentChain = _chain;
+    if (currentChain == null) return;
+    _navigateTo(<CloudNode>[...currentChain, folder]);
+  }
+
+  /// Jump to any ancestor in the current chain (or the current folder
+  /// itself — that's a no-op).
+  void _jumpToAncestor(CloudNode node) {
+    final chain = _chain;
+    if (chain == null) return;
+    if (node.id == _currentFolderId) return;
+    final idx = chain.indexWhere((n) => n.id == node.id);
+    if (idx < 0) return;
+    _navigateTo(chain.sublist(0, idx + 1));
+  }
+
+  /// Go to the parent of the current folder. No-op at root.
+  bool get _canGoUp {
+    final chain = _chain;
+    return chain != null && chain.length > 1;
+  }
+
+  void _goUp() {
+    final chain = _chain;
+    if (chain == null || chain.length < 2) return;
+    _navigateTo(chain.sublist(0, chain.length - 1));
+  }
+
+  /// Restore the previous chain from history.
+  bool get _canGoBack => _history.isNotEmpty;
+
+  void _goBack() {
+    if (_history.isEmpty) return;
+    final prev = _history.removeLast();
+    setState(() {
+      _chain = prev;
+      _currentFolderId = prev.last.id;
+      _selectionActive = false;
+      _selected.clear();
+    });
+  }
 
   // ── Selection mode ─────────────────────────────────────────────────────
 
@@ -135,58 +263,74 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = CloudGalleryLocalizations.of(context);
-    return Scaffold(
-      appBar: _inSelectionMode
-          ? _buildSelectionAppBar(l10n)
-          : _buildBrowseAppBar(l10n),
+    // Intercept the OS/hardware back button: if we have internal history
+    // to unwind, consume the pop and step back. Otherwise let the pop
+    // propagate up so the caller's Navigator can close this route.
+    return PopScope(
+      canPop: !_canGoBack && !_inSelectionMode,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        if (_inSelectionMode) {
+          _clearSelection();
+        } else if (_canGoBack) {
+          _goBack();
+        }
+      },
+      child: Scaffold(
+      appBar: widget.appBar,
       // SafeArea keeps the grid clear of gesture bars, curved edges, and
-      // any other system-decoration insets. AppBar already covers the top;
-      // requesting `top: false` avoids double padding.
+      // any other system-decoration insets. When the consumer provided
+      // an AppBar it already covers the top; otherwise we need it here.
       body: SafeArea(
-        top: false,
-        child: CloudFolderGrid(
-        storage: _storage,
-        folderId: widget.folderId,
-        onFolderTap: (folder) {
-          // Append tapped folder to our known chain — child renders its
-          // breadcrumb without any Firestore round-trip.
-          final chain = _chain;
-          final childChain =
-              chain == null ? null : <CloudNode>[...chain, folder];
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => CloudFolderScreen(
+        top: widget.appBar == null,
+        child: Column(
+          children: [
+            // Top-of-body chrome: path bar in browse mode, selection
+            // header in selection mode. Same slot — swapping avoids
+            // shifting the grid.
+            _inSelectionMode
+                ? _buildSelectionBar(l10n)
+                : CloudPathBar(
+                    storage: _storage,
+                    folderId: _currentFolderId,
+                    chain: _chain,
+                    rootLabel: widget.rootLabel,
+                    onBack: _canGoBack ? _goBack : null,
+                    onUp: _canGoUp ? _goUp : null,
+                    onNavigate: _jumpToAncestor,
+                  ),
+            const Divider(height: 1),
+            Expanded(
+              child: CloudFolderGrid(
                 storage: _storage,
-                folderId: folder.id,
-                initialChain: childChain,
-                rootLabel: widget.rootLabel,
-                readOnly: widget.readOnly,
+                folderId: _currentFolderId,
+                onFolderTap: _openSubfolder,
+                onFileTap: (file, mediaSiblings) {
+                  if (file.isMedia) {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => _MediaViewerScaffold(
+                          files: mediaSiblings,
+                          initialIndex: mediaSiblings.indexOf(file),
+                        ),
+                      ),
+                    );
+                    return;
+                  }
+                  // Non-media (PDF, docs, etc.): download + hand off to the OS.
+                  _openFileExternally(file);
+                },
+                onLinkTap: _openLink,
+                onNodeLongPress: (node, details) =>
+                    _showNodeMenu(node, details.globalPosition),
+                selectionMode: _selectionActive,
+                selectedNodeIds: _selected.keys.toSet(),
+                onNodeToggleSelection:
+                    widget.readOnly ? null : _toggleSelection,
               ),
             ),
-          );
-        },
-        onFileTap: (file, mediaSiblings) {
-          if (file.isMedia) {
-            Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => _MediaViewerScaffold(
-                  files: mediaSiblings,
-                  initialIndex: mediaSiblings.indexOf(file),
-                ),
-              ),
-            );
-            return;
-          }
-          // Non-media (PDF, docs, etc.): download + hand off to the OS.
-          _openFileExternally(file);
-        },
-        onLinkTap: _openLink,
-        onNodeLongPress: (node, details) =>
-            _showNodeMenu(node, details.globalPosition),
-        selectionMode: _selectionActive,
-        selectedNodeIds: _selected.keys.toSet(),
-        onNodeToggleSelection: widget.readOnly ? null : _toggleSelection,
-      ),
+          ],
+        ),
       ),
       floatingActionButton: widget.readOnly
           ? null
@@ -222,52 +366,34 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
                     ),
                   ],
                 ),
+      ),
     );
   }
 
-  PreferredSizeWidget _buildBrowseAppBar(CloudGalleryLocalizations l10n) {
-    return AppBar(
-      // The breadcrumb replaces the traditional AppBar title — it already
-      // shows the current folder as its last (bold) segment.
-      title: CloudFolderBreadcrumb(
-        storage: _storage,
-        folderId: widget.folderId,
-        chain: _chain,
-        rootLabel: widget.rootLabel,
-        onNavigate: (node) {
-          if (node.id == widget.folderId) return;
-          // Sub-chain up to the tapped ancestor — child renders instantly.
-          List<CloudNode>? childChain;
-          final chain = _chain;
-          if (chain != null) {
-            final idx = chain.indexWhere((n) => n.id == node.id);
-            if (idx >= 0) childChain = chain.sublist(0, idx + 1);
-          }
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute<void>(
-              builder: (_) => CloudFolderScreen(
-                storage: _storage,
-                folderId: node.id,
-                initialChain: childChain,
-                rootLabel: widget.rootLabel,
-                readOnly: widget.readOnly,
+  /// Top-of-body chrome in selection mode. Same slot as [CloudPathBar];
+  /// swapping keeps the grid below at a fixed offset. Bulk actions live
+  /// in the FAB — see [_buildSelectionFabs].
+  Widget _buildSelectionBar(CloudGalleryLocalizations l10n) {
+    return Material(
+      color: Theme.of(context).colorScheme.surface,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        child: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: _clearSelection,
+            ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                l10n.selectionCountLabel(_selected.length),
+                style: Theme.of(context).textTheme.titleMedium,
               ),
             ),
-          );
-        },
+          ],
+        ),
       ),
-    );
-  }
-
-  PreferredSizeWidget _buildSelectionAppBar(CloudGalleryLocalizations l10n) {
-    // Actions (move, delete) live in the FAB slot in selection mode — see
-    // [_buildSelectionFabs]. The AppBar stays informational only.
-    return AppBar(
-      leading: IconButton(
-        icon: const Icon(Icons.close),
-        onPressed: _clearSelection,
-      ),
-      title: Text(l10n.selectionCountLabel(_selected.length)),
     );
   }
 
@@ -319,7 +445,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
       ),
     );
     if (name == null || name.isEmpty) return;
-    await _storage.createFolder(parentId: widget.folderId, name: name);
+    await _storage.createFolder(parentId: _currentFolderId, name: name);
   }
 
   Future<void> _uploadFile() async {
@@ -366,7 +492,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
     final tasks = <UploadTask>[];
     for (final entry in prepared) {
       final task = _storage.upload(
-        parentId: widget.folderId,
+        parentId: _currentFolderId,
         name: entry.picked.name,
         source: FileSource(entry.file),
         thumbnail: entry.thumbnails == null
@@ -508,18 +634,10 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
 
   void _openNode(CloudNode node) {
     if (node is CloudFolder) {
-      final chain = _chain;
-      Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => CloudFolderScreen(
-            storage: _storage,
-            folderId: node.id,
-            initialChain: chain == null ? null : <CloudNode>[...chain, node],
-            rootLabel: widget.rootLabel,
-            readOnly: widget.readOnly,
-          ),
-        ),
-      );
+      // In-place navigation — no route push. Selection is cleared inside
+      // [_openSubfolder] so a long-press → "Open" from selection mode
+      // exits cleanly into the child folder.
+      _openSubfolder(node);
       return;
     }
     if (node is CloudFile && node.isMedia) {
@@ -671,7 +789,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
     if (result == null) return;
     if (result.name.isEmpty || result.url.isEmpty) return;
     await _storage.createLink(
-      parentId: widget.folderId,
+      parentId: _currentFolderId,
       name: result.name,
       url: _normalizeUrl(result.url),
     );
