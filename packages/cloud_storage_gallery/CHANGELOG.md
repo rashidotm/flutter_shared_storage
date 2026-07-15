@@ -1,3 +1,36 @@
+# 0.5.0
+
+**New: client-side sort for grid contents.**
+
+* Two new public types (both exported from the barrel):
+  * `CloudNodeSortField` — `name` / `createdAt` / `updatedAt` /
+    `size` / `type`.
+  * `CloudNodeSort` — immutable `(field, ascending, foldersFirst)`
+    triple with `copyWith`. Defaults to name ascending, folders
+    first.
+* Helper: `sortCloudNodes(nodes, sort)` — pure function, stable
+  tiebreak by name, no mutation.
+* New optional param on `CloudFolderGrid`: `sort`. Applied
+  client-side inside the `StreamBuilder`, no Firestore index
+  required on the consumer's project.
+* New optional param on `CloudPathBar`: `trailing: List<Widget>`.
+  Rendered after the breadcrumb — text-direction-aware. Use it to
+  slot your own icon buttons alongside the built-in nav chrome.
+* Sort menu wired into `CloudFolderScreen`: a `PopupMenuButton` in
+  the path bar's new trailing slot with radio field options, a
+  direction toggle, and a folders-first toggle. State is
+  session-scoped (resets when the widget is recreated).
+
+**Localization:** 9 new strings under a "Sort menu" section
+(`sortTooltip`, `sortByHeader`, five `sortFieldXxx` labels,
+`sortDirectionAscending` / `Descending`, `sortFoldersFirst`).
+Provided in EN and AR.
+
+**Breaking (custom l10n only):** consumers who ship their own
+`CloudGalleryLocalizations` impl need to add the nine new getters.
+Consumers relying on the built-in `Cn`/`Ar` implementations are
+unaffected.
+
 # 0.4.0
 
 **New: pinch-to-zoom on the grid.** Two-finger pinch changes the

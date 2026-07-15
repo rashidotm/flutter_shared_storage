@@ -13,10 +13,16 @@ import 'cloud_bulk_progress_dialog.dart';
 import 'cloud_folder_grid.dart';
 import 'cloud_folder_picker.dart';
 import 'cloud_media_viewer.dart';
+import 'cloud_node_sort.dart';
 import 'cloud_path_bar.dart';
 import 'cloud_upload_dialog.dart';
 import 'localizations/cloud_gallery_localizations.dart';
 import 'thumbnail_generator.dart';
+
+/// Sentinel values emitted from the sort popup for the two non-field
+/// toggles. Field values are [CloudNodeSortField] enum members
+/// directly.
+enum _SortMenuAction { toggleDirection, toggleFoldersFirst }
 
 /// A ready-to-use, full-featured folder browser backed by [CloudStorage].
 ///
@@ -115,6 +121,10 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
   /// restores the chain without a refetch. Stack behavior: most recent
   /// on the end.
   final List<List<CloudNode>> _history = <List<CloudNode>>[];
+
+  /// Current sort. Session-scoped — resets to default when the widget
+  /// is recreated.
+  CloudNodeSort _sort = const CloudNodeSort();
 
   static CloudFolder _syntheticRoot() => CloudFolder(
         id: kRootFolderId,
@@ -303,6 +313,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
                     onBack: _canGoBack ? _goBack : null,
                     onUp: _canGoUp ? _goUp : null,
                     onNavigate: _jumpToAncestor,
+                    trailing: [_buildSortMenu(l10n)],
                   ),
             const Divider(height: 1),
             Expanded(
@@ -312,6 +323,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
                     child: CloudFolderGrid(
                       storage: _storage,
                       folderId: _currentFolderId,
+                      sort: _sort,
                       onFolderTap: _openSubfolder,
                       onFileTap: (file, mediaSiblings) {
                         if (file.isMedia) {
@@ -389,6 +401,64 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
           child: const Icon(Icons.note_add_outlined),
         ),
       ],
+    );
+  }
+
+  /// Trailing sort selector for the path bar. Popup menu with radio
+  /// options for the field, a divider, a direction toggle, and a
+  /// folders-first toggle. The whole thing writes back into [_sort].
+  Widget _buildSortMenu(CloudGalleryLocalizations l10n) {
+    String fieldLabel(CloudNodeSortField f) => switch (f) {
+          CloudNodeSortField.name => l10n.sortFieldName,
+          CloudNodeSortField.createdAt => l10n.sortFieldDateCreated,
+          CloudNodeSortField.updatedAt => l10n.sortFieldDateModified,
+          CloudNodeSortField.size => l10n.sortFieldSize,
+          CloudNodeSortField.type => l10n.sortFieldType,
+        };
+    return PopupMenuButton<Object>(
+      tooltip: l10n.sortTooltip,
+      icon: const Icon(Icons.sort),
+      itemBuilder: (context) => <PopupMenuEntry<Object>>[
+        PopupMenuItem<Object>(
+          enabled: false,
+          child: Text(
+            l10n.sortByHeader,
+            style: Theme.of(context).textTheme.labelMedium,
+          ),
+        ),
+        for (final f in CloudNodeSortField.values)
+          CheckedPopupMenuItem<Object>(
+            value: f,
+            checked: _sort.field == f,
+            child: Text(fieldLabel(f)),
+          ),
+        const PopupMenuDivider(),
+        CheckedPopupMenuItem<Object>(
+          value: _SortMenuAction.toggleDirection,
+          checked: !_sort.ascending,
+          child: Text(
+            _sort.ascending
+                ? l10n.sortDirectionAscending
+                : l10n.sortDirectionDescending,
+          ),
+        ),
+        CheckedPopupMenuItem<Object>(
+          value: _SortMenuAction.toggleFoldersFirst,
+          checked: _sort.foldersFirst,
+          child: Text(l10n.sortFoldersFirst),
+        ),
+      ],
+      onSelected: (value) {
+        setState(() {
+          if (value is CloudNodeSortField) {
+            _sort = _sort.copyWith(field: value);
+          } else if (value == _SortMenuAction.toggleDirection) {
+            _sort = _sort.copyWith(ascending: !_sort.ascending);
+          } else if (value == _SortMenuAction.toggleFoldersFirst) {
+            _sort = _sort.copyWith(foldersFirst: !_sort.foldersFirst);
+          }
+        });
+      },
     );
   }
 

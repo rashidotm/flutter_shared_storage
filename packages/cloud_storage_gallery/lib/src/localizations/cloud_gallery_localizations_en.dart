@@ -125,6 +125,27 @@ class CloudGalleryLocalizationsEn extends CloudGalleryLocalizations {
   String gridErrorLabel(Object error) => 'Error: $error';
 
   @override
+  String get sortTooltip => 'Sort';
+  @override
+  String get sortByHeader => 'Sort by';
+  @override
+  String get sortFieldName => 'Name';
+  @override
+  String get sortFieldDateCreated => 'Date created';
+  @override
+  String get sortFieldDateModified => 'Date modified';
+  @override
+  String get sortFieldSize => 'Size';
+  @override
+  String get sortFieldType => 'Type';
+  @override
+  String get sortDirectionAscending => 'Ascending';
+  @override
+  String get sortDirectionDescending => 'Descending';
+  @override
+  String get sortFoldersFirst => 'Folders first';
+
+  @override
   String get unitBytes => 'B';
   @override
   String get unitKilobytes => 'KB';

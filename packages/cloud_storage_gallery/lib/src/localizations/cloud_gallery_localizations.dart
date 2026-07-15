@@ -170,6 +170,27 @@ abstract class CloudGalleryLocalizations {
   String get emptyFolder;
   String gridErrorLabel(Object error);
 
+  // ── Sort menu ──────────────────────────────────────────────────────────
+
+  /// Tooltip on the sort icon button.
+  String get sortTooltip;
+
+  /// Header row shown at the top of the sort popup menu.
+  String get sortByHeader;
+
+  String get sortFieldName;
+  String get sortFieldDateCreated;
+  String get sortFieldDateModified;
+  String get sortFieldSize;
+  String get sortFieldType;
+
+  /// Menu row that flips direction. Shown with an arrow icon.
+  String get sortDirectionAscending;
+  String get sortDirectionDescending;
+
+  /// Toggle row for the folders-first option.
+  String get sortFoldersFirst;
+
   // ── Byte units ─────────────────────────────────────────────────────────
 
   String get unitBytes;

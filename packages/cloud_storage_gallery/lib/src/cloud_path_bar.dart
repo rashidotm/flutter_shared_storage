@@ -30,6 +30,7 @@ class CloudPathBar extends StatelessWidget {
     this.onUp,
     this.chain,
     this.rootLabel,
+    this.trailing = const <Widget>[],
   });
 
   final CloudStorage storage;
@@ -39,6 +40,11 @@ class CloudPathBar extends StatelessWidget {
   final void Function(CloudNode) onNavigate;
   final VoidCallback? onBack;
   final VoidCallback? onUp;
+
+  /// Widgets rendered after the breadcrumb, in the same [Row]. Typical
+  /// use: sort selector, view-mode toggle, or any consumer-supplied
+  /// icon button that belongs with the folder chrome.
+  final List<Widget> trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +75,7 @@ class CloudPathBar extends StatelessWidget {
                 onNavigate: onNavigate,
               ),
             ),
+            ...trailing,
           ],
         ),
       ),

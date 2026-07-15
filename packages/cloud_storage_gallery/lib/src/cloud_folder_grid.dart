@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_storage_platform_interface/cloud_storage_platform_interface.dart';
 import 'package:flutter/material.dart';
 
+import 'cloud_node_sort.dart';
 import 'localizations/cloud_gallery_localizations.dart';
 
 /// Live grid of a folder's contents — folders shown as folder tiles, files as
@@ -41,6 +42,7 @@ class CloudFolderGrid extends StatefulWidget {
     this.minCrossAxisCount = 2,
     this.maxCrossAxisCount = 5,
     this.spacing = 8,
+    this.sort = const CloudNodeSort(),
     this.emptyBuilder,
   });
 
@@ -79,6 +81,11 @@ class CloudFolderGrid extends StatefulWidget {
   final int maxCrossAxisCount;
 
   final double spacing;
+
+  /// How to order the children in this folder. Applied client-side —
+  /// no backend index needed. See [CloudNodeSort] for options.
+  final CloudNodeSort sort;
+
   final WidgetBuilder? emptyBuilder;
 
   @override
@@ -129,11 +136,15 @@ class _CloudFolderGridState extends State<CloudFolderGrid> {
         if (!snap.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
-        final nodes = snap.data!;
-        if (nodes.isEmpty) {
+        final rawNodes = snap.data!;
+        if (rawNodes.isEmpty) {
           return widget.emptyBuilder?.call(context) ??
               Center(child: Text(l10n.emptyFolder));
         }
+        // Client-side sort — the Firestore query returns the folder's
+        // children unordered (creation order in practice); we order in
+        // Dart so no composite index is needed on the consumer's side.
+        final nodes = sortCloudNodes(rawNodes, widget.sort);
         final mediaSiblings =
             nodes.whereType<CloudFile>().where((f) => f.isMedia).toList();
         // GestureDetector for pinch-to-zoom. HitTestBehavior.opaque
