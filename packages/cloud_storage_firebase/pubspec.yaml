@@ -36,6 +36,8 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
   fake_cloud_firestore: ^4.1.1
+  firebase_storage_mocks: ^0.8.1
+  mocktail: ^1.0.4
 
 # For monorepo development, always resolve the sibling package from the
 # local source. `pub publish` ignores dependency_overrides — consumers on
