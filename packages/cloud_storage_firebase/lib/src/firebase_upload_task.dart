@@ -14,9 +14,9 @@ class FirebaseUploadTask implements UploadTask {
     required DocumentReference<Map<String, dynamic>> nodeDoc,
     required Future<void> Function(fbs.TaskSnapshot snap) onSuccess,
     required this.name,
-  }) : _storageTask = storageTask,
-       _nodeDoc = nodeDoc,
-       _onSuccess = onSuccess {
+  })  : _storageTask = storageTask,
+        _nodeDoc = nodeDoc,
+        _onSuccess = onSuccess {
     _wire();
   }
 
@@ -47,9 +47,7 @@ class FirebaseUploadTask implements UploadTask {
             totalBytes: storageDone
                 ? null
                 : (snap.totalBytes <= 0 ? null : snap.totalBytes),
-            status: storageDone
-                ? UploadStatus.running
-                : _statusFor(snap.state),
+            status: storageDone ? UploadStatus.running : _statusFor(snap.state),
           ),
         );
       },

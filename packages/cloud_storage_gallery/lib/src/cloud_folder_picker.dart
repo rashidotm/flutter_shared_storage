@@ -92,48 +92,48 @@ class _CloudFolderPickerScreenState extends State<_CloudFolderPickerScreen> {
       body: SafeArea(
         top: false,
         child: Column(
-        children: [
-          CloudFolderBreadcrumb(
-            storage: widget.storage,
-            folderId: _currentFolderId,
-            rootLabel: rootLabel,
-            onNavigate: (node) => _navigateTo(node.id),
-          ),
-          const Divider(height: 1),
-          Expanded(
-            child: StreamBuilder<List<CloudNode>>(
-              key: ValueKey(_currentFolderId),
-              stream: widget.storage.watchFolder(_currentFolderId),
-              builder: (context, snap) {
-                if (!snap.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final folders = snap.data!
-                    .whereType<CloudFolder>()
-                    .where((f) => f.id != widget.excludeFolderId)
-                    .toList();
-                if (folders.isEmpty) {
-                  return Center(
-                    child: Text(l10n.moveHereEmptyHint(moveHereLabel)),
-                  );
-                }
-                return ListView.builder(
-                  itemCount: folders.length,
-                  itemBuilder: (context, i) {
-                    final folder = folders[i];
-                    return ListTile(
-                      leading: const Icon(Icons.folder),
-                      title: Text(folder.name),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => _navigateTo(folder.id),
-                    );
-                  },
-                );
-              },
+          children: [
+            CloudFolderBreadcrumb(
+              storage: widget.storage,
+              folderId: _currentFolderId,
+              rootLabel: rootLabel,
+              onNavigate: (node) => _navigateTo(node.id),
             ),
-          ),
-        ],
-      ),
+            const Divider(height: 1),
+            Expanded(
+              child: StreamBuilder<List<CloudNode>>(
+                key: ValueKey(_currentFolderId),
+                stream: widget.storage.watchFolder(_currentFolderId),
+                builder: (context, snap) {
+                  if (!snap.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final folders = snap.data!
+                      .whereType<CloudFolder>()
+                      .where((f) => f.id != widget.excludeFolderId)
+                      .toList();
+                  if (folders.isEmpty) {
+                    return Center(
+                      child: Text(l10n.moveHereEmptyHint(moveHereLabel)),
+                    );
+                  }
+                  return ListView.builder(
+                    itemCount: folders.length,
+                    itemBuilder: (context, i) {
+                      final folder = folders[i];
+                      return ListTile(
+                        leading: const Icon(Icons.folder),
+                        title: Text(folder.name),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => _navigateTo(folder.id),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

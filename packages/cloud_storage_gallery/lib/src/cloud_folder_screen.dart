@@ -112,9 +112,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
   /// [_currentFolderId] by [_navigateTo]. Nullable to signal "not yet
   /// loaded" during the first fetch.
   late List<CloudNode>? _chain = widget.initialChain ??
-      (widget.folderId == kRootFolderId
-          ? <CloudNode>[_syntheticRoot()]
-          : null);
+      (widget.folderId == kRootFolderId ? <CloudNode>[_syntheticRoot()] : null);
 
   /// Internal navigation history for the path bar's back button. Each
   /// entry is a snapshot of `_chain` — never just an id — so going back
@@ -542,15 +540,13 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
 
   Future<void> _uploadFile() async {
     final l10n = CloudGalleryLocalizations.of(context);
-    final result =
-        await FilePicker.pickFiles(allowMultiple: true);
+    final result = await FilePicker.pickFiles(allowMultiple: true);
     if (result == null || result.files.isEmpty) return;
 
     // Filter out picks without a real filesystem path (some pickers can
     // hand back streams-only entries).
-    final picked = result.files
-        .where((f) => f.path != null)
-        .toList(growable: false);
+    final picked =
+        result.files.where((f) => f.path != null).toList(growable: false);
     if (picked.isEmpty || !mounted) return;
 
     // Phase 1: generate thumbnails per file. Runs while a per-item
@@ -1132,10 +1128,8 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
     if (nodes.isEmpty) return;
     // Exclude any selected FOLDER from valid destinations — you can't
     // move a folder into itself. Files-only selections have no exclusions.
-    final firstSelectedFolderId = nodes
-        .whereType<CloudFolder>()
-        .map((f) => f.id)
-        .firstOrNull;
+    final firstSelectedFolderId =
+        nodes.whereType<CloudFolder>().map((f) => f.id).firstOrNull;
     final target = await pickCloudFolder(
       context,
       storage: _storage,
@@ -1205,7 +1199,8 @@ class _MediaViewerScaffoldState extends State<_MediaViewerScaffold> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_current.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+        title:
+            Text(_current.name, maxLines: 1, overflow: TextOverflow.ellipsis),
       ),
       body: CloudMediaViewer(
         files: widget.files,

@@ -20,7 +20,8 @@ CloudNode _nodeFromData(String id, Map<String, dynamic> data) {
   final type = data[kFieldType] as String? ?? kTypeFile;
   final createdAt = (data[kFieldCreatedAt] as Timestamp?)?.toDate() ??
       DateTime.fromMillisecondsSinceEpoch(0);
-  final updatedAt = (data[kFieldUpdatedAt] as Timestamp?)?.toDate() ?? createdAt;
+  final updatedAt =
+      (data[kFieldUpdatedAt] as Timestamp?)?.toDate() ?? createdAt;
 
   if (type == kTypeFolder) {
     return CloudFolder(

@@ -38,8 +38,7 @@ CloudLink _link(String name, {DateTime? at}) => CloudLink(
       url: 'https://example.com/$name',
     );
 
-List<String> _names(List<CloudNode> nodes) =>
-    nodes.map((n) => n.name).toList();
+List<String> _names(List<CloudNode> nodes) => nodes.map((n) => n.name).toList();
 
 void main() {
   group('sortCloudNodes — name field', () {

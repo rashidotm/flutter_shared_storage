@@ -51,8 +51,7 @@ class _CloudBulkProgressDialogState<T>
   @override
   void initState() {
     super.initState();
-    _rowStates =
-        List<_RowState>.filled(widget.items.length, _RowState.pending);
+    _rowStates = List<_RowState>.filled(widget.items.length, _RowState.pending);
     _run();
   }
 
@@ -154,9 +153,8 @@ class _CloudBulkProgressDialogState<T>
           ? null
           : [
               TextButton(
-                onPressed: _cancelled
-                    ? null
-                    : () => setState(() => _cancelled = true),
+                onPressed:
+                    _cancelled ? null : () => setState(() => _cancelled = true),
                 child: Text(widget.cancelLabel ?? l10n.buttonCancel),
               ),
             ],
@@ -184,11 +182,9 @@ class _BulkRow extends StatelessWidget {
               Icons.radio_button_unchecked,
               color: scheme.onSurfaceVariant,
             ),
-          _RowState.running =>
-            const CircularProgressIndicator(strokeWidth: 2),
+          _RowState.running => const CircularProgressIndicator(strokeWidth: 2),
           _RowState.done => Icon(Icons.check_circle, color: scheme.primary),
-          _RowState.failed =>
-            Icon(Icons.error_outline, color: scheme.error),
+          _RowState.failed => Icon(Icons.error_outline, color: scheme.error),
         },
       ),
       title: Text(

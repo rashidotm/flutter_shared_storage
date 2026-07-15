@@ -40,8 +40,7 @@ void main() {
       expect(up.onPressed, isNull);
     });
 
-    testWidgets('back / up call their callbacks when tapped',
-        (tester) async {
+    testWidgets('back / up call their callbacks when tapped', (tester) async {
       final storage = FakeCloudStorage();
       var backCount = 0;
       var upCount = 0;
@@ -61,8 +60,7 @@ void main() {
       expect(upCount, 1);
     });
 
-    testWidgets('trailing widgets render after the breadcrumb',
-        (tester) async {
+    testWidgets('trailing widgets render after the breadcrumb', (tester) async {
       final storage = FakeCloudStorage();
       await tester.pumpWidget(_harness(
         CloudPathBar(

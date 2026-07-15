@@ -79,17 +79,14 @@ List<CloudNode> sortCloudNodes(List<CloudNode> nodes, CloudNodeSort sort) {
         a.name.toLowerCase().compareTo(b.name.toLowerCase()),
       CloudNodeSortField.createdAt => a.createdAt.compareTo(b.createdAt),
       CloudNodeSortField.updatedAt => a.updatedAt.compareTo(b.updatedAt),
-      CloudNodeSortField.size =>
-        _sizeOf(a).compareTo(_sizeOf(b)),
-      CloudNodeSortField.type =>
-        _typeOrder(a).compareTo(_typeOrder(b)),
+      CloudNodeSortField.size => _sizeOf(a).compareTo(_sizeOf(b)),
+      CloudNodeSortField.type => _typeOrder(a).compareTo(_typeOrder(b)),
     };
     // Stable tiebreaker: nodes with the same primary key sort by name so
     // the order is deterministic even when the primary comparator is a
     // draw (e.g. two files with identical sizes).
-    final tie = cmp != 0
-        ? cmp
-        : a.name.toLowerCase().compareTo(b.name.toLowerCase());
+    final tie =
+        cmp != 0 ? cmp : a.name.toLowerCase().compareTo(b.name.toLowerCase());
     return sort.ascending ? tie : -tie;
   });
   return sorted;

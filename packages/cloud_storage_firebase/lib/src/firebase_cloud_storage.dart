@@ -8,7 +8,8 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart' hide Source;
 import 'package:cloud_storage_platform_interface/cloud_storage_platform_interface.dart';
 import 'package:firebase_storage/firebase_storage.dart' as fbs;
-import 'package:flutter_cache_manager/flutter_cache_manager.dart' hide FileSource;
+import 'package:flutter_cache_manager/flutter_cache_manager.dart'
+    hide FileSource;
 import 'package:mime/mime.dart';
 import 'package:path/path.dart' as p;
 
@@ -37,11 +38,11 @@ class FirebaseCloudStorage implements CloudStorage {
     FirebaseFirestore? firestore,
     fbs.FirebaseStorage? storage,
     BaseCacheManager? cacheManager,
-  }) : _firestorePath = _validatePath(firestorePath, 'firestorePath'),
-       _storageRoot = _validatePath(storagePath, 'storagePath'),
-       _firestore = firestore ?? FirebaseFirestore.instance,
-       _storage = storage ?? fbs.FirebaseStorage.instance,
-       _cache = cacheManager ?? DefaultCacheManager();
+  })  : _firestorePath = _validatePath(firestorePath, 'firestorePath'),
+        _storageRoot = _validatePath(storagePath, 'storagePath'),
+        _firestore = firestore ?? FirebaseFirestore.instance,
+        _storage = storage ?? fbs.FirebaseStorage.instance,
+        _cache = cacheManager ?? DefaultCacheManager();
 
   final String _firestorePath;
   final String _storageRoot;
@@ -131,7 +132,8 @@ class FirebaseCloudStorage implements CloudStorage {
     required String name,
   }) async {
     _validateName(name);
-    final resolved = await _resolver.resolve(parentId: parentId, desiredName: name);
+    final resolved =
+        await _resolver.resolve(parentId: parentId, desiredName: name);
     final path = await _pathFor(parentId, resolved);
     final doc = _nodes.doc();
     final now = FieldValue.serverTimestamp();
@@ -156,7 +158,8 @@ class FirebaseCloudStorage implements CloudStorage {
 
   @override
   Future<void> deleteFolder(String folderId, {bool recursive = false}) async {
-    final children = await _nodes.where(kFieldParentId, isEqualTo: folderId).get();
+    final children =
+        await _nodes.where(kFieldParentId, isEqualTo: folderId).get();
     if (children.docs.isNotEmpty && !recursive) {
       throw const InvalidArgumentException(
         'Folder is not empty. Pass recursive: true to delete its contents.',
@@ -558,7 +561,8 @@ class FirebaseCloudStorage implements CloudStorage {
 
   /// After a folder is renamed/moved, rewrite `path` on every descendant.
   Future<void> _rewritePathsUnder(String folderId, String newBasePath) async {
-    final children = await _nodes.where(kFieldParentId, isEqualTo: folderId).get();
+    final children =
+        await _nodes.where(kFieldParentId, isEqualTo: folderId).get();
     for (final child in children.docs) {
       final childName = child.data()[kFieldName] as String? ?? '';
       final childPath = p.posix.join(newBasePath, childName);

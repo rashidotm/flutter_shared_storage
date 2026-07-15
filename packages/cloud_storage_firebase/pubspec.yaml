@@ -52,3 +52,7 @@ dependency_overrides:
   # `dependencies:` above. Remove once fake_cloud_firestore ships a
   # compatible release.
   cloud_firestore: ">=6.0.0 <6.7.0"
+  # firebase_storage 13.4.4 references a `FirebasePlugin` type that
+  # isn't in our firebase_core version. Same workspace-only pin;
+  # published consumers keep the ^13.0.0 range from above.
+  firebase_storage: ">=13.0.0 <13.4.4"

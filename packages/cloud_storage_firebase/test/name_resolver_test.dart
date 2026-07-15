@@ -29,8 +29,7 @@ void main() {
     resolver = NameResolver(nodes);
   });
 
-  test('returns the desired name verbatim when no conflict exists',
-      () async {
+  test('returns the desired name verbatim when no conflict exists', () async {
     final resolved = await resolver.resolve(
       parentId: 'p1',
       desiredName: 'report.pdf',
@@ -38,8 +37,7 @@ void main() {
     expect(resolved, 'report.pdf');
   });
 
-  test('appends " (1)" before the extension on first conflict',
-      () async {
+  test('appends " (1)" before the extension on first conflict', () async {
     await _seed(firestore, parentId: 'p1', name: 'report.pdf');
     final resolved = await resolver.resolve(
       parentId: 'p1',

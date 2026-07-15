@@ -21,7 +21,8 @@ export 'package:cloud_storage_platform_interface/cloud_storage_platform_interfac
 CloudStorage defaultCloudStorage({
   required String firestorePath,
   required String storagePath,
-}) => FirebaseCloudStorage(
+}) =>
+    FirebaseCloudStorage(
       firestorePath: firestorePath,
       storagePath: storagePath,
     );

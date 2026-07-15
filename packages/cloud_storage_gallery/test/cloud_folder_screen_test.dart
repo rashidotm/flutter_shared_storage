@@ -71,8 +71,7 @@ void main() {
   });
 
   group('CloudFolderScreen — path bar', () {
-    testWidgets('renders the path bar with back / up buttons',
-        (tester) async {
+    testWidgets('renders the path bar with back / up buttons', (tester) async {
       final storage = FakeCloudStorage(
         children: const {kRootFolderId: <CloudNode>[]},
       );
@@ -81,10 +80,9 @@ void main() {
       ));
       await tester.pumpAndSettle();
       expect(find.byType(CloudPathBar), findsOneWidget);
-      expect(find.widgetWithIcon(IconButton, Icons.arrow_back),
-          findsOneWidget);
-      expect(find.widgetWithIcon(IconButton, Icons.arrow_upward),
-          findsOneWidget);
+      expect(find.widgetWithIcon(IconButton, Icons.arrow_back), findsOneWidget);
+      expect(
+          find.widgetWithIcon(IconButton, Icons.arrow_upward), findsOneWidget);
     });
 
     testWidgets(
@@ -155,8 +153,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('vacation.jpg'), findsOneWidget);
 
-        await tester
-            .tap(find.widgetWithIcon(IconButton, Icons.arrow_back));
+        await tester.tap(find.widgetWithIcon(IconButton, Icons.arrow_back));
         await tester.pumpAndSettle();
         expect(find.text('Photos'), findsOneWidget);
         expect(find.text('vacation.jpg'), findsNothing);
@@ -395,4 +392,3 @@ void main() {
     );
   });
 }
-
