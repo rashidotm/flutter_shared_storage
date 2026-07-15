@@ -1,3 +1,53 @@
+# 0.2.0
+
+Structural rework of `CloudFolderScreen`. Direct users of the widget
+need to adapt — see the "Breaking" section below.
+
+**New:**
+
+* `CloudFolderScreen` now takes an optional `appBar: PreferredSizeWidget?`.
+  Consumers wire whatever they need (title, actions, outer-Navigator
+  back button); pass `null` and the widget renders with no AppBar at
+  all (the path bar becomes the top of the screen).
+* New `CloudPathBar` widget rendered as the first row of the body,
+  below the consumer AppBar. Layout: `[back] [up] <breadcrumb>`. Back
+  walks an internal history stack of chain snapshots (no refetch);
+  Up drops the last segment of the current path. Both disable at
+  their boundaries. Breadcrumb segments stay tappable for direct
+  jump-to-ancestor navigation. Exported from the barrel for
+  consumers building custom screens.
+
+**Breaking behavioral changes to `CloudFolderScreen`:**
+
+* Folder navigation is now **in-place**. Tapping a subfolder updates
+  the current folder in state instead of pushing a new
+  `CloudFolderScreen` route. Only media viewer opens still push a
+  route. If you were relying on `Navigator.pop()` to go back one
+  folder level, that no longer works — use the built-in path bar
+  back button or the OS back button (which is intercepted via
+  `PopScope`).
+* **AppBar is no longer built for you.** The widget's own breadcrumb
+  AppBar and selection AppBar are both removed. Pass `appBar:` if
+  you want an AppBar; the path bar (in browse mode) or the selection
+  header (in selection mode) both live below whatever you pass.
+* Selection info (the "N selected" title and close button) has moved
+  from the AppBar's leading + title slots into the same in-body slot
+  as the path bar. Bulk-action FABs are unchanged.
+
+**Migration:**
+
+```dart
+// Before
+CloudFolderScreen(storage: storage, folderId: root);
+
+// After — same, plus your AppBar if you want one
+CloudFolderScreen(
+  storage: storage,
+  folderId: root,
+  appBar: AppBar(title: const Text('My files')),
+);
+```
+
 # 0.1.2
 
 Selection & progress polish.
