@@ -1,3 +1,27 @@
+# 0.4.0
+
+**New: pinch-to-zoom on the grid.** Two-finger pinch changes the
+column count in real time. Column-count changes crossfade with a
+scale transition (220 ms). Single-finger scroll is not intercepted
+— only gestures with two or more pointers resize.
+
+* `CloudFolderGrid` is now a `StatefulWidget` owning the current
+  column count. Two new optional params bound the pinch range:
+  * `minCrossAxisCount` — default `2`.
+  * `maxCrossAxisCount` — default `5`.
+* Once the user pinches, the internal state takes over. Rebuilds
+  with a different `crossAxisCount` param are ignored — the state
+  is authoritative.
+
+**Fix: folder tile no longer overflows at small tile sizes.**
+The tile was a `Column` with a fixed 56 dp icon + label; at the
+tighter column counts pinch-to-zoom now allows, the tile height
+dropped below the intrinsic column height and Flutter surfaced
+the yellow/black overflow indicator. `_FolderTile` now mirrors
+the `_FileTile` / `_LinkTile` layout — icon centered in a `Stack`,
+name as a `PositionedDirectional` bottom overlay. The 56 dp icon
+size is unchanged; only the label placement moved.
+
 # 0.3.0
 
 **Breaking:** `CloudFolderScreen` is no longer a `Scaffold`.

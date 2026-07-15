@@ -19,7 +19,13 @@ typedef CloudNodeLongPressCallback = void Function(
 /// Supports **selection mode**: when [selectedNodeIds] is non-empty and
 /// [onNodeToggleSelection] is provided, tap toggles selection instead of
 /// opening. Selected tiles show a filled check-circle overlay.
-class CloudFolderGrid extends StatelessWidget {
+///
+/// **Pinch-to-zoom** — two-finger pinch changes the number of columns
+/// between [minCrossAxisCount] and [maxCrossAxisCount]. Column-count
+/// changes fade-through-scale via an [AnimatedSwitcher]. Single-finger
+/// scroll is not intercepted — only gestures with two or more pointers
+/// resize.
+class CloudFolderGrid extends StatefulWidget {
   const CloudFolderGrid({
     super.key,
     required this.storage,
@@ -32,6 +38,8 @@ class CloudFolderGrid extends StatelessWidget {
     this.selectedNodeIds = const <String>{},
     this.onNodeToggleSelection,
     this.crossAxisCount = 3,
+    this.minCrossAxisCount = 2,
+    this.maxCrossAxisCount = 5,
     this.spacing = 8,
     this.emptyBuilder,
   });
@@ -58,18 +66,62 @@ class CloudFolderGrid extends StatelessWidget {
 
   /// Called when the user taps a tile while [selectionMode] is active.
   final void Function(CloudNode node)? onNodeToggleSelection;
+
+  /// Initial column count. After the user pinches to change it, the
+  /// grid's internal state takes over — subsequent rebuilds with a
+  /// different [crossAxisCount] value are ignored.
   final int crossAxisCount;
+
+  /// Lower bound for pinch-to-zoom. Two-finger zoom in past this stops.
+  final int minCrossAxisCount;
+
+  /// Upper bound for pinch-to-zoom. Two-finger zoom out past this stops.
+  final int maxCrossAxisCount;
+
   final double spacing;
   final WidgetBuilder? emptyBuilder;
 
+  @override
+  State<CloudFolderGrid> createState() => _CloudFolderGridState();
+}
+
+class _CloudFolderGridState extends State<CloudFolderGrid> {
+  late int _crossAxisCount = widget.crossAxisCount
+      .clamp(widget.minCrossAxisCount, widget.maxCrossAxisCount);
+
+  /// Column count when the current pinch gesture began. Continuous
+  /// scale updates divide this by `details.scale` to derive the target
+  /// count — that way the gesture is anchored to the finger positions
+  /// at start, not to the last frame.
+  int _pinchBaseCount = 0;
+
   bool get _selectionMode =>
-      selectionMode && onNodeToggleSelection != null;
+      widget.selectionMode && widget.onNodeToggleSelection != null;
+
+  void _onScaleStart(ScaleStartDetails details) {
+    _pinchBaseCount = _crossAxisCount;
+  }
+
+  void _onScaleUpdate(ScaleUpdateDetails details) {
+    // Ignore single-finger drags — those belong to the underlying
+    // scrollable. Only true pinches (2+ pointers) resize.
+    if (details.pointerCount < 2) return;
+    // scale > 1 → fingers spreading → user wants bigger tiles, i.e.
+    // fewer columns.
+    // scale < 1 → fingers pinching in → smaller tiles, more columns.
+    final target = (_pinchBaseCount / details.scale)
+        .round()
+        .clamp(widget.minCrossAxisCount, widget.maxCrossAxisCount);
+    if (target != _crossAxisCount) {
+      setState(() => _crossAxisCount = target);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = CloudGalleryLocalizations.of(context);
     return StreamBuilder<List<CloudNode>>(
-      stream: storage.watchFolder(folderId),
+      stream: widget.storage.watchFolder(widget.folderId),
       builder: (context, snap) {
         if (snap.hasError) {
           return Center(child: Text(l10n.gridErrorLabel(snap.error!)));
@@ -79,50 +131,75 @@ class CloudFolderGrid extends StatelessWidget {
         }
         final nodes = snap.data!;
         if (nodes.isEmpty) {
-          return emptyBuilder?.call(context) ??
+          return widget.emptyBuilder?.call(context) ??
               Center(child: Text(l10n.emptyFolder));
         }
-        final mediaSiblings = nodes.whereType<CloudFile>().where((f) => f.isMedia).toList();
-        return GridView.builder(
-          // Extra bottom padding leaves the last row visible above any
-          // floating action button (or other bottom-anchored chrome).
-          // Standard FAB is 56 dp + 16 dp margin from the edge; 80 dp
-          // gives one row of breathing room on top of that.
-          padding: EdgeInsets.fromLTRB(
-            spacing,
-            spacing,
-            spacing,
-            spacing + 80,
-          ),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            crossAxisSpacing: spacing,
-            mainAxisSpacing: spacing,
-          ),
-          itemCount: nodes.length,
-          itemBuilder: (context, i) {
-            final node = nodes[i];
-            return _NodeTile(
-              node: node,
-              selected: selectedNodeIds.contains(node.id),
-              onTap: () {
-                if (_selectionMode) {
-                  onNodeToggleSelection!(node);
-                  return;
-                }
-                if (node is CloudFolder) {
-                  onFolderTap?.call(node);
-                } else if (node is CloudFile) {
-                  onFileTap?.call(node, mediaSiblings);
-                } else if (node is CloudLink) {
-                  onLinkTap?.call(node);
-                }
+        final mediaSiblings =
+            nodes.whereType<CloudFile>().where((f) => f.isMedia).toList();
+        // GestureDetector for pinch-to-zoom. HitTestBehavior.opaque
+        // means the whole grid area receives pointer events, but
+        // single-finger drags fall through to the GridView's scroll
+        // recognizer thanks to the pointerCount gate in
+        // _onScaleUpdate.
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onScaleStart: _onScaleStart,
+          onScaleUpdate: _onScaleUpdate,
+          // AnimatedSwitcher keyed on the column count triggers a
+          // scale + fade transition each time the count changes.
+          // Between counts the grid renders normally; only the
+          // discrete jumps animate.
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: (child, animation) => ScaleTransition(
+              scale: Tween<double>(begin: 0.94, end: 1.0).animate(animation),
+              child: FadeTransition(opacity: animation, child: child),
+            ),
+            child: GridView.builder(
+              key: ValueKey<int>(_crossAxisCount),
+              // Extra bottom padding leaves the last row visible above any
+              // floating action button (or other bottom-anchored chrome).
+              // Standard FAB is 56 dp + 16 dp margin from the edge; 80 dp
+              // gives one row of breathing room on top of that.
+              padding: EdgeInsets.fromLTRB(
+                widget.spacing,
+                widget.spacing,
+                widget.spacing,
+                widget.spacing + 80,
+              ),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: _crossAxisCount,
+                crossAxisSpacing: widget.spacing,
+                mainAxisSpacing: widget.spacing,
+              ),
+              itemCount: nodes.length,
+              itemBuilder: (context, i) {
+                final node = nodes[i];
+                return _NodeTile(
+                  node: node,
+                  selected: widget.selectedNodeIds.contains(node.id),
+                  onTap: () {
+                    if (_selectionMode) {
+                      widget.onNodeToggleSelection!(node);
+                      return;
+                    }
+                    if (node is CloudFolder) {
+                      widget.onFolderTap?.call(node);
+                    } else if (node is CloudFile) {
+                      widget.onFileTap?.call(node, mediaSiblings);
+                    } else if (node is CloudLink) {
+                      widget.onLinkTap?.call(node);
+                    }
+                  },
+                  onLongPressStart: widget.onNodeLongPress == null
+                      ? null
+                      : (details) => widget.onNodeLongPress!(node, details),
+                );
               },
-              onLongPressStart: onNodeLongPress == null
-                  ? null
-                  : (details) => onNodeLongPress!(node, details),
-            );
-          },
+            ),
+          ),
         );
       },
     );
@@ -204,19 +281,29 @@ class _FolderTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+    final theme = Theme.of(context);
+    return Stack(
+      fit: StackFit.expand,
       children: [
-        const Icon(Icons.folder, size: 56),
-        const SizedBox(height: 4),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Text(
-            folder.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall,
+        const Center(child: Icon(Icons.folder, size: 56)),
+        // Name strip is a bottom overlay — same pattern as _FileTile /
+        // _LinkTile. Being positioned means it can't push the tile's
+        // main-axis bounds, so no overflow errors when the pinch takes
+        // the tile smaller than icon+label would fit in a Column.
+        PositionedDirectional(
+          start: 0,
+          end: 0,
+          bottom: 0,
+          child: Container(
+            color: theme.colorScheme.surface.withValues(alpha: 0.85),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            child: Text(
+              folder.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.labelSmall,
+            ),
           ),
         ),
       ],
