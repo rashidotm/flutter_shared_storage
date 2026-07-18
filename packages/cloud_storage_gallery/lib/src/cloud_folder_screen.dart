@@ -24,6 +24,13 @@ import 'thumbnail_generator.dart';
 /// directly.
 enum _SortMenuAction { toggleDirection, toggleFoldersFirst }
 
+/// Which native picker the user chose from the upload bottom sheet.
+/// `photos` restricts to `FileType.media` so the system photo picker
+/// shows images + videos from the gallery — needed because the generic
+/// file picker doesn't reliably surface the camera roll on all
+/// platforms. `files` opens the plain document picker.
+enum _UploadSource { photos, files }
+
 /// A ready-to-use, full-featured folder browser backed by [CloudStorage].
 ///
 /// **Embeddable, not a page.** The widget is not a `Scaffold` and does
@@ -540,7 +547,49 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
 
   Future<void> _uploadFile() async {
     final l10n = CloudGalleryLocalizations.of(context);
-    final result = await FilePicker.pickFiles(allowMultiple: true);
+    final source = await showModalBottomSheet<_UploadSource>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetCtx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Text(
+                  l10n.uploadSourceSheetTitle,
+                  style: Theme.of(sheetCtx).textTheme.titleMedium,
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: Text(l10n.uploadSourcePhotos),
+              subtitle: Text(l10n.uploadSourcePhotosSubtitle),
+              onTap: () => Navigator.of(sheetCtx).pop(_UploadSource.photos),
+            ),
+            ListTile(
+              leading: const Icon(Icons.insert_drive_file_outlined),
+              title: Text(l10n.uploadSourceFiles),
+              subtitle: Text(l10n.uploadSourceFilesSubtitle),
+              onTap: () => Navigator.of(sheetCtx).pop(_UploadSource.files),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (source == null || !mounted) return;
+
+    final result = await FilePicker.pickFiles(
+      allowMultiple: true,
+      // Photos → FileType.media routes to the system photo picker on
+      // Android/iOS, which surfaces images + videos from the camera
+      // roll. FileType.any opens the generic document picker.
+      type: source == _UploadSource.photos ? FileType.media : FileType.any,
+    );
     if (result == null || result.files.isEmpty) return;
 
     // Filter out picks without a real filesystem path (some pickers can

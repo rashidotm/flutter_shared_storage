@@ -103,6 +103,17 @@ class CloudGalleryLocalizationsAr extends CloudGalleryLocalizations {
       'لا توجد مجلدات فرعية. اضغط على "$moveHereLabel" لاختيار هذا المجلد.';
 
   @override
+  String get uploadSourceSheetTitle => 'الرفع من';
+  @override
+  String get uploadSourcePhotos => 'الصور والفيديوهات';
+  @override
+  String get uploadSourcePhotosSubtitle => 'اختيار من المعرض';
+  @override
+  String get uploadSourceFiles => 'الملفات';
+  @override
+  String get uploadSourceFilesSubtitle => 'اختيار أي ملف';
+
+  @override
   String get uploadingTitle => 'جارٍ الرفع';
 
   @override

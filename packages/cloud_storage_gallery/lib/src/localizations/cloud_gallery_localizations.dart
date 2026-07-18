@@ -141,6 +141,23 @@ abstract class CloudGalleryLocalizations {
   /// button label so the translation can reference it inline.
   String moveHereEmptyHint(String moveHereLabel);
 
+  // ── Upload source sheet ────────────────────────────────────────────────
+
+  /// Title of the bottom sheet that appears when the user taps the
+  /// Upload FAB and has to choose between the photo picker and the
+  /// generic file picker.
+  String get uploadSourceSheetTitle;
+
+  /// Row label + subtitle for the "photos & videos" upload source
+  /// (system photo picker; images + videos from the camera roll).
+  String get uploadSourcePhotos;
+  String get uploadSourcePhotosSubtitle;
+
+  /// Row label + subtitle for the "files" upload source (generic
+  /// document picker; any file type).
+  String get uploadSourceFiles;
+  String get uploadSourceFilesSubtitle;
+
   // ── Upload dialog ──────────────────────────────────────────────────────
 
   String get uploadingTitle;

@@ -213,6 +213,25 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(FloatingActionButton), findsNothing);
     });
+
+    testWidgets(
+      'tapping Upload FAB opens a sheet with Photos and Files options',
+      (tester) async {
+        final storage = FakeCloudStorage(
+          children: const {kRootFolderId: <CloudNode>[]},
+        );
+        await tester.pumpWidget(_harness(
+          CloudFolderScreen(storage: storage),
+        ));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byIcon(Icons.note_add_outlined));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Photos & videos'), findsOneWidget);
+        expect(find.text('Files'), findsOneWidget);
+      },
+    );
   });
 
   group('CloudFolderScreen — selection mode', () {

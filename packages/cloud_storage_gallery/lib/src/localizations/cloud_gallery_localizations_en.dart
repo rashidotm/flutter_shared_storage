@@ -104,6 +104,17 @@ class CloudGalleryLocalizationsEn extends CloudGalleryLocalizations {
       'No subfolders. Tap "$moveHereLabel" to pick this one.';
 
   @override
+  String get uploadSourceSheetTitle => 'Upload from';
+  @override
+  String get uploadSourcePhotos => 'Photos & videos';
+  @override
+  String get uploadSourcePhotosSubtitle => 'Pick from your gallery';
+  @override
+  String get uploadSourceFiles => 'Files';
+  @override
+  String get uploadSourceFilesSubtitle => 'Pick any file';
+
+  @override
   String get uploadingTitle => 'Uploading';
 
   @override

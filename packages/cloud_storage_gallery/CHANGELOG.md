@@ -1,3 +1,30 @@
+# 0.6.0
+
+**New: upload source picker on the Upload FAB.** Tapping the FAB now
+opens a bottom sheet with two options:
+
+* **Photos & videos** — routes the picker through `FileType.media`,
+  which uses the system photo picker (Android's PhotoPickerV2, iOS's
+  PHPickerViewController) so images and videos from the camera roll
+  are always shown.
+* **Files** — the generic document picker (previous behavior).
+
+Motivated by the fact that on some devices the generic file picker
+doesn't reliably surface the photo library. Both paths funnel back
+into the same thumbnail-generation + upload pipeline, so progress
+dialogs, cancel behavior, and the Firestore-doc rollback all work
+unchanged.
+
+**Localization:** 5 new strings under a new "Upload source sheet"
+section (`uploadSourceSheetTitle`, `uploadSourcePhotos` +
+`uploadSourcePhotosSubtitle`, `uploadSourceFiles` +
+`uploadSourceFilesSubtitle`). Provided in EN and AR.
+
+**Breaking (custom l10n only):** consumers who ship their own
+`CloudGalleryLocalizations` impl need to add the five new getters.
+Consumers relying on the built-in `En`/`Ar` implementations are
+unaffected.
+
 # 0.5.0
 
 **New: client-side sort for grid contents.**

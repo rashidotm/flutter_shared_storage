@@ -1,6 +1,6 @@
 name: cloud_storage_gallery
 description: Drop-in Flutter widgets for browsing folders, viewing media, uploading with progress, and thumbnail generation on top of cloud_storage.
-version: 0.5.0
+version: 0.6.0
 
 homepage: https://github.com/rashidotm/flutter_shared_storage
 repository: https://github.com/rashidotm/flutter_shared_storage/tree/master/packages/cloud_storage_gallery
