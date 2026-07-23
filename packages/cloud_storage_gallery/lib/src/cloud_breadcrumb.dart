@@ -124,7 +124,15 @@ class _CloudFolderBreadcrumbState extends State<CloudFolderBreadcrumb> {
     // titleLarge; when used stand-alone it's the inherited body style.
     // Either way, deriving from the current textTheme makes the intent
     // explicit and keeps the fontWeight override obvious.
-    final baseStyle = Theme.of(context).textTheme.titleMedium;
+    //
+    // Explicit onSurface — a consumer whose textTheme bakes in colors
+    // (the common GoogleFonts.xxxTextTheme(...) pattern) would carry
+    // that baked color through titleMedium and shadow the scheme
+    // override. Setting `color:` in the copyWith below forces the
+    // scheme to win.
+    final theme = Theme.of(context);
+    final baseStyle =
+        theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.onSurface);
 
     // While the very first load is in flight, show the root label alone —
     // still meaningful, still tappable, no visible "empty then populated"

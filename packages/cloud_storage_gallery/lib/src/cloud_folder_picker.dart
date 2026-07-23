@@ -124,13 +124,23 @@ class _CloudFolderPickerScreenState extends State<_CloudFolderPickerScreen> {
                       ),
                     );
                   }
+                  final onSurface = Theme.of(context).colorScheme.onSurface;
                   return ListView.builder(
                     itemCount: folders.length,
                     itemBuilder: (context, i) {
                       final folder = folders[i];
                       return ListTile(
                         leading: const Icon(Icons.folder),
-                        title: Text(folder.name),
+                        // Same reason as the empty-hint above: an
+                        // explicit color so a consumer's baked-in
+                        // textTheme doesn't shadow onSurface. ListTile's
+                        // own M3 default merges onSurface too, but a
+                        // consumer ListTileTheme overriding
+                        // titleTextStyle can defeat that.
+                        title: Text(
+                          folder.name,
+                          style: TextStyle(color: onSurface),
+                        ),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => _navigateTo(folder.id),
                       );

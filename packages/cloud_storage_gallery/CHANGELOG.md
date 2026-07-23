@@ -1,3 +1,21 @@
+# 0.6.2
+
+**Fix: extends the 0.6.1 onSurface fix to the folder picker and the
+breadcrumb.**
+
+Two more text sites were still inheriting from the ambient text
+theme and losing to a consumer's baked-in colors:
+
+* `CloudFolderBreadcrumb` — every segment was derived from
+  `textTheme.titleMedium` alone. Now merged with
+  `colorScheme.onSurface`. Affects the picker's title row AND
+  `CloudPathBar` in the main folder screen.
+* `pickCloudFolder`'s folder list — each `ListTile.title` was a
+  bare `Text(folder.name)`. Now passes an explicit `onSurface`
+  style. `ListTile` normally applies `onSurface` itself in M3, but
+  a consumer `ListTileTheme` with an override can shadow that;
+  passing the color directly bypasses either path.
+
 # 0.6.1
 
 **Fix: empty-state labels now follow `ColorScheme.onSurface`.**
