@@ -1,3 +1,19 @@
+# 0.6.1
+
+**Fix: empty-state labels now follow `ColorScheme.onSurface`.**
+
+The "Empty folder" label on `CloudFolderGrid` and the
+"tap Move here to pick this one" hint in `pickCloudFolder` were
+rendered as bare `Text(...)` widgets. That inherited the ambient
+`DefaultTextStyle`, so a consumer whose `textTheme` bakes in colors
+(the common case with `GoogleFonts.xxxTextTheme(...)` and similar
+patterns) would shadow their own `ColorScheme.onSurface` — the
+labels would ignore the scheme override and use whatever color was
+baked into the text theme.
+
+Both call sites now pass `style: TextStyle(color: onSurface)`
+directly, so the scheme wins.
+
 # 0.6.0
 
 **New: upload source picker on the Upload FAB.** Tapping the FAB now

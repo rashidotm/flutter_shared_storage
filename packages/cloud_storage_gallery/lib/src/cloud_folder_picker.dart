@@ -113,8 +113,15 @@ class _CloudFolderPickerScreenState extends State<_CloudFolderPickerScreen> {
                       .where((f) => f.id != widget.excludeFolderId)
                       .toList();
                   if (folders.isEmpty) {
+                    // See cloud_folder_grid.dart — explicit onSurface so
+                    // a consumer's baked-in textTheme colors don't shadow
+                    // their own ColorScheme.onSurface here.
+                    final theme = Theme.of(context);
                     return Center(
-                      child: Text(l10n.moveHereEmptyHint(moveHereLabel)),
+                      child: Text(
+                        l10n.moveHereEmptyHint(moveHereLabel),
+                        style: TextStyle(color: theme.colorScheme.onSurface),
+                      ),
                     );
                   }
                   return ListView.builder(

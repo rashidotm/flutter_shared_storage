@@ -138,8 +138,19 @@ class _CloudFolderGridState extends State<CloudFolderGrid> {
         }
         final rawNodes = snap.data!;
         if (rawNodes.isEmpty) {
+          // Explicit onSurface — a plain `Text(...)` here would pick up
+          // the ambient `DefaultTextStyle`, and a consumer whose
+          // `textTheme` bakes in colors (e.g. GoogleFonts) would shadow
+          // their own `ColorScheme.onSurface`. Passing the color
+          // directly bypasses that.
+          final theme = Theme.of(context);
           return widget.emptyBuilder?.call(context) ??
-              Center(child: Text(l10n.emptyFolder));
+              Center(
+                child: Text(
+                  l10n.emptyFolder,
+                  style: TextStyle(color: theme.colorScheme.onSurface),
+                ),
+              );
         }
         // Client-side sort — the Firestore query returns the folder's
         // children unordered (creation order in practice); we order in
