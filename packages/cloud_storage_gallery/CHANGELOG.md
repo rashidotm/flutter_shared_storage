@@ -1,3 +1,22 @@
+# 0.6.4
+
+**Fix: eliminate breadcrumb latency in `pickCloudFolder`.**
+
+The move-to picker's address bar (`CloudFolderBreadcrumb`) was
+lagging behind every navigation: each tap on a folder cleared the
+breadcrumb until an async chain-walk (`storage.getNode` per
+ancestor, sequentially) finished. `CloudFolderScreen` never had
+this problem because it keeps the ancestor chain in memory and
+passes it into the breadcrumb; the picker just tracked the current
+folder id and let the breadcrumb self-load.
+
+The picker now mirrors the main screen: it seeds a synthetic root
+chain on entry, extends the chain by one when the user taps into
+a subfolder, and truncates it when the user taps a breadcrumb
+segment. The chain is passed to `CloudFolderBreadcrumb` on every
+build, so the address bar updates on the same frame as the tap —
+no round-trip to storage required.
+
 # 0.6.3
 
 **Changed: empty-state and folder-picker chrome now use

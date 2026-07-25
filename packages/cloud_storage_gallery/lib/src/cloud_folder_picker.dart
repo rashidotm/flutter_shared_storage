@@ -65,9 +65,57 @@ class _CloudFolderPickerScreenState extends State<_CloudFolderPickerScreen> {
   // that Future regardless of how deep the user has navigated.
   late String _currentFolderId = widget.startFolderId;
 
-  void _navigateTo(String folderId) {
-    if (folderId == _currentFolderId) return;
-    setState(() => _currentFolderId = folderId);
+  // Ancestor chain (root → ... → current) maintained in-memory so the
+  // breadcrumb can render immediately on every navigation. Without
+  // this the breadcrumb would fall back to walking `parentId` via
+  // sequential `storage.getNode` calls, which introduces visible
+  // latency between tapping a folder and the address bar updating.
+  //
+  // Seeded with a synthetic root for the common startFolderId ==
+  // kRootFolderId case. For the (rare) non-root start we leave it
+  // null; the breadcrumb will self-load once as before.
+  late List<CloudNode>? _chain = widget.startFolderId == kRootFolderId
+      ? <CloudNode>[_syntheticRoot()]
+      : null;
+
+  static CloudFolder _syntheticRoot() => CloudFolder(
+        id: kRootFolderId,
+        name: '',
+        parentId: '',
+        path: '',
+        createdAt: DateTime.fromMillisecondsSinceEpoch(0),
+        updatedAt: DateTime.fromMillisecondsSinceEpoch(0),
+      );
+
+  /// Tap on a subfolder in the list — extend the chain by one.
+  void _navigateInto(CloudFolder folder) {
+    if (folder.id == _currentFolderId) return;
+    setState(() {
+      _currentFolderId = folder.id;
+      final chain = _chain;
+      _chain = chain == null ? null : <CloudNode>[...chain, folder];
+    });
+  }
+
+  /// Tap on any ancestor in the breadcrumb — truncate the chain to
+  /// that segment. Falls back to just switching the folder id if we
+  /// somehow don't have a chain (non-root start case).
+  void _jumpToAncestor(CloudNode node) {
+    if (node.id == _currentFolderId) return;
+    final chain = _chain;
+    if (chain == null) {
+      setState(() => _currentFolderId = node.id);
+      return;
+    }
+    final idx = chain.indexWhere((n) => n.id == node.id);
+    if (idx < 0) {
+      setState(() => _currentFolderId = node.id);
+      return;
+    }
+    setState(() {
+      _currentFolderId = node.id;
+      _chain = chain.sublist(0, idx + 1);
+    });
   }
 
   @override
@@ -112,8 +160,9 @@ class _CloudFolderPickerScreenState extends State<_CloudFolderPickerScreen> {
               child: CloudFolderBreadcrumb(
                 storage: widget.storage,
                 folderId: _currentFolderId,
+                chain: _chain,
                 rootLabel: rootLabel,
-                onNavigate: (node) => _navigateTo(node.id),
+                onNavigate: _jumpToAncestor,
                 foregroundColor: scheme.onPrimary,
                 scrollToCurrent: false,
               ),
@@ -183,7 +232,7 @@ class _CloudFolderPickerScreenState extends State<_CloudFolderPickerScreen> {
                             Icons.chevron_right,
                             color: scheme.onPrimary,
                           ),
-                          onTap: () => _navigateTo(folder.id),
+                          onTap: () => _navigateInto(folder),
                         );
                       },
                     ),
