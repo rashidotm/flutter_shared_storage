@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'firebase_options.dart';
+import 'theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,7 +35,7 @@ class ExampleApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'cloud_storage example',
-      theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.green),
+      theme: CustomTheme.defaultTheme.theme(),
       // Force Arabic to demo the built-in localization + automatic RTL.
       // In a real app drop `locale` and let the device locale drive it.
       locale: const Locale('ar'),
