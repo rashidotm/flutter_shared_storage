@@ -1,3 +1,51 @@
+# 0.6.3
+
+**Changed: empty-state and folder-picker chrome now use
+`primary` / `onPrimary` instead of chasing `onSurface`.**
+
+Supersedes the 0.6.1 and 0.6.2 approach of forcing `onSurface`
+into the empty labels, breadcrumb, and picker list. That was
+fragile against consumer themes that bake colors into
+`textTheme`, and it left the picker looking indistinguishable
+from any other scaffold background.
+
+New visual:
+
+* **Empty folder** (`CloudFolderGrid`) — a centered `Card` with
+  `colorScheme.primary` background and `onPrimary` label text.
+* **Empty picker** (`pickCloudFolder`) — same card treatment for
+  the "no subfolders" hint, with an outer horizontal padding of
+  50 px so the card keeps at least that much clearance from each
+  screen edge on any device.
+* **Non-empty picker** — the whole list area is painted with
+  `colorScheme.primary`; each folder tile's icon, name, and
+  chevron render in `onPrimary`.
+* **Picker path bar** — the breadcrumb strip at the top of the
+  picker is now painted `primary` too, spans the full row width,
+  and its segments + chevrons render in `onPrimary`. The root
+  segment stays pinned to the row's leading edge regardless of
+  how deep the current folder is, so the picker's chrome reads
+  as one continuous coloured surface with a stable start point.
+* **Breadcrumb separator direction (bug fix)** — the widget was
+  manually swapping `Icons.chevron_right` for `Icons.chevron_left`
+  in RTL. Both of those icons carry `matchTextDirection: true`, so
+  `Icon` was auto-mirroring on top of the swap, ending up with `>`
+  in RTL. Now unconditionally `Icons.chevron_right`; `Icon` picks
+  the correct glyph per direction. Affects both `CloudFolderScreen`
+  and `pickCloudFolder`.
+* **Breadcrumb API** — `CloudFolderBreadcrumb` gains two optional
+  params:
+  * `foregroundColor` — when supplied, overrides both the segment
+    text color and the separator chevron color. When null the
+    widget keeps its previous behavior of inheriting from
+    `textTheme.titleMedium` and the ambient `IconTheme`.
+  * `scrollToCurrent` (default `true`) — when false, disables the
+    auto-scroll-to-end behavior so the root segment stays at the
+    row's leading edge regardless of depth. Long chains stay
+    horizontally scrollable.
+  The main folder screen's path bar (via `CloudPathBar`) does not
+  pass either param and is unchanged.
+
 # 0.6.2
 
 **Fix: extends the 0.6.1 onSurface fix to the folder picker and the

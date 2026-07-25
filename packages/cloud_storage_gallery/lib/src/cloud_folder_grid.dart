@@ -138,17 +138,27 @@ class _CloudFolderGridState extends State<CloudFolderGrid> {
         }
         final rawNodes = snap.data!;
         if (rawNodes.isEmpty) {
-          // Explicit onSurface — a plain `Text(...)` here would pick up
-          // the ambient `DefaultTextStyle`, and a consumer whose
-          // `textTheme` bakes in colors (e.g. GoogleFonts) would shadow
-          // their own `ColorScheme.onSurface`. Passing the color
-          // directly bypasses that.
+          // Empty-state label lives in a centered primary/onPrimary
+          // card. Using scheme.primary as the surface color means the
+          // label always reads even when a consumer's textTheme bakes
+          // in a color that doesn't play well with the ambient
+          // scaffold background — and it makes "the folder is empty"
+          // a piece of visible chrome instead of a whisper.
           final theme = Theme.of(context);
           return widget.emptyBuilder?.call(context) ??
               Center(
-                child: Text(
-                  l10n.emptyFolder,
-                  style: TextStyle(color: theme.colorScheme.onSurface),
+                child: Card(
+                  color: theme.colorScheme.primary,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
+                    child: Text(
+                      l10n.emptyFolder,
+                      style: TextStyle(color: theme.colorScheme.onPrimary),
+                    ),
+                  ),
                 ),
               );
         }

@@ -73,6 +73,7 @@ class _CloudFolderPickerScreenState extends State<_CloudFolderPickerScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = CloudGalleryLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
     final title = widget.title ?? l10n.moveToTitle;
     final moveHereLabel = widget.moveHereLabel ?? l10n.buttonMoveHere;
     final rootLabel = widget.rootLabel ?? l10n.rootLabel;
@@ -93,11 +94,29 @@ class _CloudFolderPickerScreenState extends State<_CloudFolderPickerScreen> {
         top: false,
         child: Column(
           children: [
-            CloudFolderBreadcrumb(
-              storage: widget.storage,
-              folderId: _currentFolderId,
-              rootLabel: rootLabel,
-              onNavigate: (node) => _navigateTo(node.id),
+            // Breadcrumb sits on a primary strip so it visually
+            // continues into the primary-painted list below. Container
+            // is used instead of ColoredBox specifically because
+            // Column doesn't stretch its children by default (its
+            // crossAxisAlignment defaults to center) — the width:
+            // infinity forces the coloured strip to span the whole
+            // row rather than shrink to the breadcrumb's content.
+            //
+            // scrollToCurrent is disabled so the root segment is
+            // always pinned to the row's leading edge; deep chains
+            // extend to the trailing edge and remain horizontally
+            // scrollable.
+            Container(
+              width: double.infinity,
+              color: scheme.primary,
+              child: CloudFolderBreadcrumb(
+                storage: widget.storage,
+                folderId: _currentFolderId,
+                rootLabel: rootLabel,
+                onNavigate: (node) => _navigateTo(node.id),
+                foregroundColor: scheme.onPrimary,
+                scrollToCurrent: false,
+              ),
             ),
             const Divider(height: 1),
             Expanded(
@@ -113,38 +132,61 @@ class _CloudFolderPickerScreenState extends State<_CloudFolderPickerScreen> {
                       .where((f) => f.id != widget.excludeFolderId)
                       .toList();
                   if (folders.isEmpty) {
-                    // See cloud_folder_grid.dart — explicit onSurface so
-                    // a consumer's baked-in textTheme colors don't shadow
-                    // their own ColorScheme.onSurface here.
-                    final theme = Theme.of(context);
+                    // Same primary/onPrimary card treatment as the
+                    // empty-folder label in CloudFolderGrid — visible
+                    // regardless of the ambient scaffold background or
+                    // any color baked into the consumer's textTheme.
+                    // The outer Padding guarantees at least 50 px
+                    // between the card and each screen edge; on a
+                    // long hint the text wraps to fit the available
+                    // width.
                     return Center(
-                      child: Text(
-                        l10n.moveHereEmptyHint(moveHereLabel),
-                        style: TextStyle(color: theme.colorScheme.onSurface),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 50),
+                        child: Card(
+                          color: scheme.primary,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 16,
+                            ),
+                            child: Text(
+                              l10n.moveHereEmptyHint(moveHereLabel),
+                              style: TextStyle(color: scheme.onPrimary),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
                       ),
                     );
                   }
-                  final onSurface = Theme.of(context).colorScheme.onSurface;
-                  return ListView.builder(
-                    itemCount: folders.length,
-                    itemBuilder: (context, i) {
-                      final folder = folders[i];
-                      return ListTile(
-                        leading: const Icon(Icons.folder),
-                        // Same reason as the empty-hint above: an
-                        // explicit color so a consumer's baked-in
-                        // textTheme doesn't shadow onSurface. ListTile's
-                        // own M3 default merges onSurface too, but a
-                        // consumer ListTileTheme overriding
-                        // titleTextStyle can defeat that.
-                        title: Text(
-                          folder.name,
-                          style: TextStyle(color: onSurface),
-                        ),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => _navigateTo(folder.id),
-                      );
-                    },
+                  // Whole list area is painted with primary; text and
+                  // icons on top read as onPrimary. Matches the empty-
+                  // state card visually and sidesteps any custom
+                  // ListTileTheme the consumer may have installed.
+                  return ColoredBox(
+                    color: scheme.primary,
+                    child: ListView.builder(
+                      itemCount: folders.length,
+                      itemBuilder: (context, i) {
+                        final folder = folders[i];
+                        return ListTile(
+                          leading: Icon(
+                            Icons.folder,
+                            color: scheme.onPrimary,
+                          ),
+                          title: Text(
+                            folder.name,
+                            style: TextStyle(color: scheme.onPrimary),
+                          ),
+                          trailing: Icon(
+                            Icons.chevron_right,
+                            color: scheme.onPrimary,
+                          ),
+                          onTap: () => _navigateTo(folder.id),
+                        );
+                      },
+                    ),
                   );
                 },
               ),
