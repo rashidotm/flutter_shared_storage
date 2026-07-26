@@ -1,3 +1,22 @@
+# 0.6.5
+
+**Fix: `pickCloudFolder` list area no longer flashes back to the
+scaffold background when the current folder is empty.**
+
+The 0.6.3 empty-state treatment centered a primary/onPrimary card
+on top of the ambient scaffold — so navigating into an empty
+subfolder made the primary strip disappear (revealing the
+scaffold) and then reappear on the next non-empty folder.
+Distracting to move through a tree of mixed empty/populated
+folders.
+
+The primary paint is now applied to the whole list area
+unconditionally. The empty state is just the "no subfolders" hint
+rendered as `onPrimary` text on the same primary background — the
+card is gone (a primary card on a primary background would be
+invisible anyway) and the surrounding chrome stays visually
+stable across every navigation.
+
 # 0.6.4
 
 **Fix: eliminate breadcrumb latency in `pickCloudFolder`.**
