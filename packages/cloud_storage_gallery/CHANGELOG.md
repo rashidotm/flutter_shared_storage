@@ -1,3 +1,19 @@
+# 0.6.6
+
+**Fix: `pickCloudFolder` primary paint no longer stops at the
+bottom SafeArea inset.**
+
+The picker's body is wrapped in `SafeArea(top: false)` so the
+list clears the gesture bar and rounded corners. Everything
+inside the SafeArea rendered primary, but the space excluded by
+the SafeArea below the last row showed the ambient
+`theme.scaffoldBackgroundColor` through the Scaffold, breaking
+the illusion of a single continuous coloured surface.
+
+Setting `Scaffold.backgroundColor: colorScheme.primary` fills
+the excluded inset with the same colour as the list area. The
+AppBar and its own background are unaffected.
+
 # 0.6.5
 
 **Fix: `pickCloudFolder` list area no longer flashes back to the

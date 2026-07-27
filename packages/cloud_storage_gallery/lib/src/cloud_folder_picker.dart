@@ -127,6 +127,12 @@ class _CloudFolderPickerScreenState extends State<_CloudFolderPickerScreen> {
     final rootLabel = widget.rootLabel ?? l10n.rootLabel;
 
     return Scaffold(
+      // Whole picker screen bg = primary so the space excluded by the
+      // bottom SafeArea (gesture bar / rounded corners) fills with the
+      // same colour as the list area above it. Without this the
+      // primary paint stops at the SafeArea's bottom inset and the
+      // scaffold's default bg colour leaks through beneath.
+      backgroundColor: scheme.primary,
       appBar: AppBar(
         title: Text(title),
         actions: [
