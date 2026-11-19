@@ -5,6 +5,10 @@ current Android/iOS toolchains.** No Dart API in this package changed,
 but host apps have to change how they are built. See
 [MIGRATION.md](MIGRATION.md) for step-by-step instructions.
 
+Apps that can't move to `material_ui` yet can stay on **0.7.x**, which
+has the same thumbnailer, dependency upgrades and fixes on
+`package:flutter/material.dart`. 1.0.0 includes everything in 0.7.0.
+
 ### Breaking changes
 
 - **Built on `material_ui`.** `package:flutter/material.dart` is
@@ -21,9 +25,12 @@ but host apps have to change how they are built. See
   `fc_native_video_thumbnail` 4.x. macOS 13 where applicable.
 - **Android:** minSdk 24. Tested on Gradle 9.5 / AGP 9.3.1, which
   Flutter 3.50 requires.
-- **Transitive majors:** `file_picker` ^11 -> ^13.4.0 and `share_plus`
-  ^11 -> ^13.3.1. Apps that depend on either directly must raise their
-  constraints. `file_picker` 12+ also changed its own API.
+- **Transitive majors:** `file_picker` ^11 -> ^13.4.0, `share_plus`
+  ^11 -> ^13.3.1 and `open_filex` ^4.5.0 -> ^5.0.0. Apps that depend on
+  any of these directly must raise their constraints. `file_picker` 12+
+  also changed its own API.
+- **Raised minimums:** `video_player` ^2.14.1, `url_launcher` ^6.3.3,
+  `image` ^4.13.1, `mime` ^2.1.0.
 - **Removed dependencies:** `video_thumbnail`, `path`, `path_provider`,
   `flutter_localizations`.
 

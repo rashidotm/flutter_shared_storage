@@ -26,17 +26,17 @@ dependencies:
   cloud_storage_platform_interface: ^0.1.2
   cached_network_image: ^3.4.1
   photo_view: ^0.15.0
-  video_player: ^2.9.2
+  video_player: ^2.14.1
   chewie: ^1.13.0
   flutter_cache_manager: ^3.4.1
   # Full-featured folder browser deps:
   file_picker: ^13.4.0
   share_plus: ^13.3.1
-  image: ^4.3.0
+  image: ^4.13.1
   fc_native_video_thumbnail: ^4.0.0
-  mime: ^2.0.0
-  open_filex: ^4.5.0
-  url_launcher: ^6.3.1
+  mime: ^2.1.0
+  open_filex: ^5.0.0
+  url_launcher: ^6.3.3
 
 dev_dependencies:
   flutter_test:
