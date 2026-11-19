@@ -2,8 +2,7 @@ import 'package:cloud_storage/cloud_storage.dart';
 import 'package:cloud_storage_gallery/cloud_storage_gallery.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'firebase_options.dart';
 import 'theme.dart';
@@ -42,9 +41,8 @@ class ExampleApp extends StatelessWidget {
       supportedLocales: CloudGalleryLocalizations.supportedLocales,
       localizationsDelegates: const [
         CloudGalleryLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
+        // material_ui's bundle: Material + Cupertino + Widgets delegates.
+        ...GlobalMaterialLocalizations.delegates,
       ],
       // CloudFolderScreen is not a Scaffold — wrap it in your own to
       // supply the AppBar, the SnackBar host, etc. The path bar and

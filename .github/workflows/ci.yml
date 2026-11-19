@@ -18,7 +18,8 @@ jobs:
         with:
           # Pinned to match local dev to avoid Dart-version drift
           # breaking fake_cloud_firestore's type overrides.
-          flutter-version: '3.41.1'
+          # cloud_storage_gallery 1.0.0 needs >= 3.47 (material_ui).
+          flutter-version: '3.50.0'
           channel: stable
           cache: true
 
@@ -50,7 +51,8 @@ jobs:
         with:
           # Pinned to match local dev to avoid Dart-version drift
           # breaking fake_cloud_firestore's type overrides.
-          flutter-version: '3.41.1'
+          # cloud_storage_gallery 1.0.0 needs >= 3.47 (material_ui).
+          flutter-version: '3.50.0'
           channel: stable
           cache: true
 

@@ -5,8 +5,9 @@ published to pub.dev. The rules below keep things predictable across all four.
 
 ## Prerequisites
 
-- Flutter **3.19+** (`flutter --version`)
-- Dart **3.3+** (bundled with the above)
+- Flutter **3.47+** (`flutter --version`). CI pins **3.50.0**, so use that
+  locally to avoid analyzer/formatter drift.
+- Dart **3.13+** (bundled with the above)
 - **Melos** for workspace orchestration:
   ```bash
   dart pub global activate melos
@@ -81,7 +82,13 @@ tests in the same PR. `melos run test` in CI will fail otherwise.
 ## Code style
 
 - Follow `flutter_lints` — CI enforces this via `melos run analyze`.
-- Format with `dart format` (via `melos run format`).
+- Format with `dart format` (via `melos run format`). Packages whose SDK
+  floor is Dart 3.7+ (currently `cloud_storage_gallery` and the example) use
+  the "tall" style, which manages trailing commas itself. Don't fight it.
+- In Flutter code, import `package:material_ui/material_ui.dart`, never the
+  deprecated `package:flutter/material.dart`. If you embed a third-party
+  widget that still uses the legacy library, wrap it in
+  `MaterialUiCompatibilityBridge` (see `CloudMediaViewer`'s chewie player).
 - Comments: only where the *why* is non-obvious. Don't restate what the code
   already says with well-named identifiers.
 - Widgets derive **all** colors, text styles, and directionality from the
@@ -128,7 +135,7 @@ Dev-only deps have looser rules. Add them under `dev_dependencies:`.
 
 Packages are published independently on pub.dev, versioned per-package. The
 current versions live in each package's `pubspec.yaml`. Tags follow
-`<package>-vX.Y.Z` (e.g. `cloud_storage_gallery-v0.5.0`).
+`<package>-vX.Y.Z` (e.g. `cloud_storage_gallery-v1.0.0`).
 
 Release order matters because of dependency chains:
 

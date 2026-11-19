@@ -1,3 +1,58 @@
+# 1.0.0
+
+**Breaking release: material_ui, a maintained video thumbnailer, and
+current Android/iOS toolchains.** No Dart API in this package changed,
+but host apps have to change how they are built. See
+[MIGRATION.md](MIGRATION.md) for step-by-step instructions.
+
+### Breaking changes
+
+- **Built on `material_ui`.** `package:flutter/material.dart` is
+  deprecated since Flutter 3.47. Every widget now imports
+  `package:material_ui/material_ui.dart`. `material_ui`'s `Theme` and
+  `MaterialLocalizations` are distinct types from the legacy ones, so
+  **the host `MaterialApp` must come from `material_ui`**. Under a
+  legacy `MaterialApp` the widgets fall back to the default theme and
+  assert on missing `MaterialLocalizations`. Use
+  `...GlobalMaterialLocalizations.delegates` from `material_ui`;
+  `flutter_localizations` is no longer a dependency.
+- **SDK floors:** Flutter >= 3.47, Dart ^3.13 (was 3.19 / 3.3).
+- **iOS 16.0** minimum deployment target (was 13.0), required by
+  `fc_native_video_thumbnail` 4.x. macOS 13 where applicable.
+- **Android:** minSdk 24. Tested on Gradle 9.5 / AGP 9.3.1, which
+  Flutter 3.50 requires.
+- **Transitive majors:** `file_picker` ^11 -> ^13.4.0 and `share_plus`
+  ^11 -> ^13.3.1. Apps that depend on either directly must raise their
+  constraints. `file_picker` 12+ also changed its own API.
+- **Removed dependencies:** `video_thumbnail`, `path`, `path_provider`,
+  `flutter_localizations`.
+
+### Fixes
+
+- **Android builds on Gradle 9 again.** `video_thumbnail` (unmaintained;
+  `jcenter()` + AGP 4.1) is replaced by `fc_native_video_thumbnail`
+  ^4.0.0. Frames are taken in memory, so there is no temp file, and
+  still from the first frame and limited by width only, so portrait
+  clips keep a 1024px-wide preview, as before. A native decode failure
+  (`PlatformException`) makes `generateThumbnails` return `null`,
+  keeping its "upload without variants" contract. Setup errors such as
+  `MissingPluginException` still propagate (#1).
+- `CloudMediaViewer` wraps `chewie`, which still uses
+  `flutter/material.dart`, inline and in fullscreen, in
+  `MaterialUiCompatibilityBridge`, so the player controls keep the
+  app's theme and localizations (#2). The bridge is a deprecated
+  migration utility, available throughout `material_ui` 1.x. It will be
+  removed once chewie migrates (#4).
+- `CloudMediaViewer` no longer leaks a `VideoPlayerController` when a
+  video page is closed or swiped away before it finishes initializing,
+  or when initialization fails.
+
+### Internal
+
+- Reformatted with the "tall" `dart format` style that applies from
+  language version 3.7.
+- Unit tests for `generateThumbnails`' video path.
+
 # 0.6.6
 
 **Fix: `pickCloudFolder` primary paint no longer stops at the

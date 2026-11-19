@@ -1,5 +1,5 @@
 import 'package:cloud_storage_platform_interface/cloud_storage_platform_interface.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'cloud_breadcrumb.dart';
 
@@ -62,10 +62,7 @@ class CloudPathBar extends StatelessWidget {
               tooltip: MaterialLocalizations.of(context).backButtonTooltip,
               onPressed: onBack,
             ),
-            IconButton(
-              icon: const Icon(Icons.arrow_upward),
-              onPressed: onUp,
-            ),
+            IconButton(icon: const Icon(Icons.arrow_upward), onPressed: onUp),
             Expanded(
               child: CloudFolderBreadcrumb(
                 storage: storage,

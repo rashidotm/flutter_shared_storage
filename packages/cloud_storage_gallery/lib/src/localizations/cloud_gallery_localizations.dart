@@ -11,12 +11,13 @@ import 'cloud_gallery_localizations_en.dart';
 /// current [Locale]:
 ///
 /// ```dart
+/// import 'package:material_ui/material_ui.dart';
+///
 /// MaterialApp(
 ///   localizationsDelegates: const [
 ///     CloudGalleryLocalizations.delegate,
-///     GlobalMaterialLocalizations.delegate,
-///     GlobalWidgetsLocalizations.delegate,
-///     GlobalCupertinoLocalizations.delegate,
+///     // material_ui's bundle: Material + Cupertino + Widgets delegates.
+///     ...GlobalMaterialLocalizations.delegates,
 ///   ],
 ///   supportedLocales: CloudGalleryLocalizations.supportedLocales,
 ///   locale: const Locale('ar'),
@@ -222,8 +223,9 @@ class _CloudGalleryLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) {
-    return CloudGalleryLocalizations.supportedLocales
-        .any((l) => l.languageCode == locale.languageCode);
+    return CloudGalleryLocalizations.supportedLocales.any(
+      (l) => l.languageCode == locale.languageCode,
+    );
   }
 
   @override

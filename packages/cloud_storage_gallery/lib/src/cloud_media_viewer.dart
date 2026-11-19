@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chewie/chewie.dart';
 import 'package:cloud_storage_platform_interface/cloud_storage_platform_interface.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
@@ -46,8 +46,9 @@ class CloudMediaViewer extends StatefulWidget {
 }
 
 class _CloudMediaViewerState extends State<CloudMediaViewer> {
-  late final PageController _controller =
-      PageController(initialPage: widget.initialIndex);
+  late final PageController _controller = PageController(
+    initialPage: widget.initialIndex,
+  );
 
   @override
   void dispose() {
@@ -93,11 +94,10 @@ class _ImagePage extends StatelessWidget {
           child: CachedNetworkImage(
             imageUrl: url,
             fit: BoxFit.contain,
-            placeholder: (_, __) =>
+            placeholder: (_, _) =>
                 const Center(child: CircularProgressIndicator()),
-            errorWidget: (_, __, ___) => const Center(
-              child: Icon(Icons.broken_image, size: 64),
-            ),
+            errorWidget: (_, _, _) =>
+                const Center(child: Icon(Icons.broken_image, size: 64)),
           ),
           minScale: PhotoViewComputedScale.contained,
           maxScale: PhotoViewComputedScale.covered * 4,
@@ -131,6 +131,7 @@ class _VideoPageState extends State<_VideoPage> {
   }
 
   Future<void> _init() async {
+    VideoPlayerController? created;
     try {
       final url = widget.file.downloadUrl;
       final cacheManager = DefaultCacheManager();
@@ -149,9 +150,15 @@ class _VideoPageState extends State<_VideoPage> {
         controller = VideoPlayerController.networkUrl(Uri.parse(url));
         unawaited(cacheManager.downloadFile(url).then((_) {}, onError: (_) {}));
       }
+      created = controller;
 
       await controller.initialize();
-      if (!mounted) return;
+      if (!mounted) {
+        // Page was swiped away / closed mid-initialize. dispose() already
+        // ran with _video == null, so this controller is ours to release.
+        await controller.dispose();
+        return;
+      }
       setState(() {
         _video = controller;
         _chewie = ChewieController(
@@ -159,9 +166,28 @@ class _VideoPageState extends State<_VideoPage> {
           autoPlay: true,
           looping: false,
           allowFullScreen: true,
+          // Chewie pushes its fullscreen page as a new route, outside the
+          // bridge wrapped around the inline player in build(). Rebuild
+          // that page ourselves (material_ui Scaffold, black backdrop —
+          // same as Chewie's default) and bridge Chewie's legacy-Material
+          // controls there too.
+          routePageBuilder: (context, animation, secondary, provider) =>
+              Scaffold(
+                resizeToAvoidBottomInset: false,
+                body: Container(
+                  alignment: Alignment.center,
+                  color: Colors.black,
+                  // Temporary migration utility; remove with #4 once chewie
+                  // is on material_ui.
+                  // ignore: deprecated_member_use
+                  child: MaterialUiCompatibilityBridge(child: provider),
+                ),
+              ),
         );
       });
     } catch (e) {
+      // A failed initialize() still owns native resources.
+      await created?.dispose();
       if (!mounted) return;
       setState(() => _error = e);
     }
@@ -177,14 +203,19 @@ class _VideoPageState extends State<_VideoPage> {
   @override
   Widget build(BuildContext context) {
     if (_error != null) {
-      return Center(
-        child: Text('Failed to load video: $_error'),
-      );
+      return Center(child: Text('Failed to load video: $_error'));
     }
     final c = _chewie;
     if (c == null) {
       return const Center(child: CircularProgressIndicator());
     }
-    return Chewie(controller: c);
+    // Chewie still builds its controls with `package:flutter/material.dart`,
+    // whose Theme / MaterialLocalizations are distinct types from
+    // material_ui's. The bridge maps our ambient material_ui theme and
+    // localizations onto the legacy ones so the controls stay themed and
+    // don't assert on missing MaterialLocalizations. Drop once chewie
+    // migrates to material_ui (tracked in #4).
+    // ignore: deprecated_member_use
+    return MaterialUiCompatibilityBridge(child: Chewie(controller: c));
   }
 }

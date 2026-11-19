@@ -1,6 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_storage_platform_interface/cloud_storage_platform_interface.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'cloud_node_sort.dart';
 import 'localizations/cloud_gallery_localizations.dart';
@@ -93,8 +93,10 @@ class CloudFolderGrid extends StatefulWidget {
 }
 
 class _CloudFolderGridState extends State<CloudFolderGrid> {
-  late int _crossAxisCount = widget.crossAxisCount
-      .clamp(widget.minCrossAxisCount, widget.maxCrossAxisCount);
+  late int _crossAxisCount = widget.crossAxisCount.clamp(
+    widget.minCrossAxisCount,
+    widget.maxCrossAxisCount,
+  );
 
   /// Column count when the current pinch gesture began. Continuous
   /// scale updates divide this by `details.scale` to derive the target
@@ -116,9 +118,10 @@ class _CloudFolderGridState extends State<CloudFolderGrid> {
     // scale > 1 → fingers spreading → user wants bigger tiles, i.e.
     // fewer columns.
     // scale < 1 → fingers pinching in → smaller tiles, more columns.
-    final target = (_pinchBaseCount / details.scale)
-        .round()
-        .clamp(widget.minCrossAxisCount, widget.maxCrossAxisCount);
+    final target = (_pinchBaseCount / details.scale).round().clamp(
+      widget.minCrossAxisCount,
+      widget.maxCrossAxisCount,
+    );
     if (target != _crossAxisCount) {
       setState(() => _crossAxisCount = target);
     }
@@ -166,8 +169,10 @@ class _CloudFolderGridState extends State<CloudFolderGrid> {
         // children unordered (creation order in practice); we order in
         // Dart so no composite index is needed on the consumer's side.
         final nodes = sortCloudNodes(rawNodes, widget.sort);
-        final mediaSiblings =
-            nodes.whereType<CloudFile>().where((f) => f.isMedia).toList();
+        final mediaSiblings = nodes
+            .whereType<CloudFile>()
+            .where((f) => f.isMedia)
+            .toList();
         // GestureDetector for pinch-to-zoom. HitTestBehavior.opaque
         // means the whole grid area receives pointer events, but
         // single-finger drags fall through to the GridView's scroll
@@ -292,11 +297,7 @@ class _NodeTile extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     padding: const EdgeInsets.all(2),
-                    child: Icon(
-                      Icons.check,
-                      size: 16,
-                      color: scheme.onPrimary,
-                    ),
+                    child: Icon(Icons.check, size: 16, color: scheme.onPrimary),
                   ),
                 ),
             ],
@@ -358,10 +359,9 @@ class _FileTile extends StatelessWidget {
           CachedNetworkImage(
             imageUrl: thumb,
             fit: BoxFit.cover,
-            placeholder: (_, __) => ColoredBox(
-              color: theme.colorScheme.surfaceContainerHighest,
-            ),
-            errorWidget: (_, __, ___) => const _GenericFileIcon(),
+            placeholder: (_, _) =>
+                ColoredBox(color: theme.colorScheme.surfaceContainerHighest),
+            errorWidget: (_, _, _) => const _GenericFileIcon(),
           )
         else
           _PlaceholderForMime(file: file),
@@ -444,12 +444,10 @@ class _LinkTile extends StatelessWidget {
           CachedNetworkImage(
             imageUrl: thumb,
             fit: BoxFit.cover,
-            placeholder: (_, __) => ColoredBox(
-              color: theme.colorScheme.surfaceContainerHighest,
-            ),
-            errorWidget: (_, __, ___) => const Center(
-              child: Icon(Icons.link, size: 48),
-            ),
+            placeholder: (_, _) =>
+                ColoredBox(color: theme.colorScheme.surfaceContainerHighest),
+            errorWidget: (_, _, _) =>
+                const Center(child: Icon(Icons.link, size: 48)),
           )
         else
           const Center(child: Icon(Icons.link, size: 48)),

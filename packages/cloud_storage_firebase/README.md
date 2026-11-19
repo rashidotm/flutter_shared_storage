@@ -57,7 +57,7 @@ final task = storage.upload(
 );
 ```
 
-The example app shows one way to produce these using `image` (for stills) and `video_thumbnail` (for videos).
+[`cloud_storage_gallery`](https://pub.dev/packages/cloud_storage_gallery)'s `generateThumbnails(File)` is one ready-made way to produce both. It uses `image` for stills and [`fc_native_video_thumbnail`](https://pub.dev/packages/fc_native_video_thumbnail) for videos.
 
 Variant uploads are best-effort: if one fails, the original still lands and the file is usable — you just won't have a thumbnail/preview URL on the returned `CloudFile`.
 

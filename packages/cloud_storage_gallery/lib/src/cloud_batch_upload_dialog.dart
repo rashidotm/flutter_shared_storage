@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:cloud_storage_platform_interface/cloud_storage_platform_interface.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'localizations/cloud_gallery_localizations.dart';
 
@@ -100,10 +100,8 @@ class _CloudBatchUploadDialogState extends State<CloudBatchUploadDialog> {
                 child: ListView.builder(
                   shrinkWrap: true,
                   itemCount: total,
-                  itemBuilder: (context, i) => _UploadRow(
-                    task: widget.tasks[i],
-                    last: _last[i],
-                  ),
+                  itemBuilder: (context, i) =>
+                      _UploadRow(task: widget.tasks[i], last: _last[i]),
                 ),
               ),
             ),
@@ -142,30 +140,26 @@ class _UploadRow extends StatelessWidget {
     final byteFraction = p?.fraction;
     final Widget leading = switch (p?.status) {
       null => Icon(
-          Icons.radio_button_unchecked,
-          color: scheme.onSurfaceVariant,
-        ),
+        Icons.radio_button_unchecked,
+        color: scheme.onSurfaceVariant,
+      ),
       UploadStatus.running || UploadStatus.paused => const SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
+        width: 20,
+        height: 20,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      ),
       UploadStatus.success => Icon(Icons.check_circle, color: scheme.primary),
       UploadStatus.canceled => Icon(
-          Icons.cancel_outlined,
-          color: scheme.onSurfaceVariant,
-        ),
+        Icons.cancel_outlined,
+        color: scheme.onSurfaceVariant,
+      ),
       UploadStatus.error => Icon(Icons.error_outline, color: scheme.error),
     };
     return ListTile(
       dense: true,
       visualDensity: VisualDensity.compact,
       leading: SizedBox(width: 24, height: 24, child: leading),
-      title: Text(
-        task.name,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
+      title: Text(task.name, maxLines: 1, overflow: TextOverflow.ellipsis),
       subtitle: p != null && p.status == UploadStatus.running
           ? LinearProgressIndicator(value: byteFraction)
           : null,
