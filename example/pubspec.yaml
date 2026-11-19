@@ -1,17 +1,16 @@
 name: cloud_storage_example
 description: Example app for the flutter_shared_storage monorepo.
-version: 0.1.1
+version: 0.2.0
 publish_to: none
 
 environment:
-  sdk: ">=3.3.0 <4.0.0"
-  flutter: ">=3.19.0"
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  flutter_localizations:
-    sdk: flutter
+  material_ui: ^1.11.1
   cloud_storage:
     path: ../packages/cloud_storage
   cloud_storage_gallery:
