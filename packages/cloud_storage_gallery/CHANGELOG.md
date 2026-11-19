@@ -43,6 +43,12 @@ to `material_ui` keep consistent Material types and theming.
 - iOS deployment target **16.0** (`fc_native_video_thumbnail`).
 - Android minSdk 24.
 
+### Fixes
+
+- `CloudMediaViewer` no longer leaks a `VideoPlayerController` when a
+  video page is closed or swiped away before it finishes initializing,
+  or when initialization fails.
+
 ### Internal
 
 - Unit tests for the video thumbnail path.

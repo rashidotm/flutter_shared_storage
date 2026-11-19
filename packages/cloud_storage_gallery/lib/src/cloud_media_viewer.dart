@@ -131,6 +131,7 @@ class _VideoPageState extends State<_VideoPage> {
   }
 
   Future<void> _init() async {
+    VideoPlayerController? created;
     try {
       final url = widget.file.downloadUrl;
       final cacheManager = DefaultCacheManager();
@@ -149,9 +150,15 @@ class _VideoPageState extends State<_VideoPage> {
         controller = VideoPlayerController.networkUrl(Uri.parse(url));
         unawaited(cacheManager.downloadFile(url).then((_) {}, onError: (_) {}));
       }
+      created = controller;
 
       await controller.initialize();
-      if (!mounted) return;
+      if (!mounted) {
+        // Page was swiped away / closed mid-initialize. dispose() already
+        // ran with _video == null, so this controller is ours to release.
+        await controller.dispose();
+        return;
+      }
       setState(() {
         _video = controller;
         _chewie = ChewieController(
@@ -162,6 +169,8 @@ class _VideoPageState extends State<_VideoPage> {
         );
       });
     } catch (e) {
+      // A failed initialize() still owns native resources.
+      await created?.dispose();
       if (!mounted) return;
       setState(() => _error = e);
     }
