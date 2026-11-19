@@ -96,4 +96,4 @@ dependencies:
 
 Pulls in `material_ui`, `cached_network_image`, `flutter_cache_manager`, `photo_view`, `video_player`, `chewie`, `file_picker`, `share_plus`, `image`, `fc_native_video_thumbnail`, `mime`, `open_filex`, `url_launcher`. If any of these are unwanted, either fork the widgets or depend only on `cloud_storage` and build your own UI.
 
-`chewie` (the video player controls) still uses `package:flutter/material.dart`. Internally the viewer wraps it in `MaterialUiCompatibilityBridge`, so its controls pick up your `material_ui` theme. You don't need to do anything.
+`chewie` (the video player controls) still uses `package:flutter/material.dart`. Internally the viewer wraps it in `MaterialUiCompatibilityBridge`, so its controls pick up your `material_ui` theme. You don't need to do anything. The bridge is a deprecated, temporary Flutter utility. It's available throughout `material_ui` 1.x (which this package pins with `^1.11.1`), and the wrapper will be dropped once chewie migrates.

@@ -1,8 +1,9 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:cloud_storage_gallery/cloud_storage_gallery.dart';
 import 'package:fc_native_video_thumbnail/fc_native_video_thumbnail_platform_interface.dart';
+import 'package:flutter/services.dart'
+    show MissingPluginException, PlatformException, Uint8List;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
@@ -62,7 +63,8 @@ void main() {
       expect(fake.calls.single, {
         'srcFile': video.path,
         'width': 1024,
-        'height': 1024,
+        // Only the width may limit the frame (see portrait test below).
+        'height': 4096,
         'quality': 85,
         // First frame, matching the old video_thumbnail default.
         'at': {'atUs': 0},
@@ -77,12 +79,38 @@ void main() {
       expect(await generateThumbnails(video, mimeType: 'video/mp4'), isNull);
     });
 
-    test('returns null (does not throw) when the plugin fails', () async {
+    test('returns null (does not throw) when native decoding fails', () async {
       FcNativeVideoThumbnailPlatform.instance = _FakeThumbnailPlatform(
-        () async => throw Exception('decode failed'),
+        () async => throw PlatformException(code: 'decode', message: 'boom'),
       );
 
       expect(await generateThumbnails(video, mimeType: 'video/mp4'), isNull);
+    });
+
+    test('lets setup errors (missing plugin) propagate', () async {
+      FcNativeVideoThumbnailPlatform.instance = _FakeThumbnailPlatform(
+        () async => throw MissingPluginException('not registered'),
+      );
+
+      await expectLater(
+        generateThumbnails(video, mimeType: 'video/mp4'),
+        throwsA(isA<MissingPluginException>()),
+      );
+    });
+
+    test('portrait frames keep a 1024px-wide preview', () async {
+      // What the plugin returns for a 1080x1920 clip fitted inside
+      // 1024x4096: width-limited, aspect preserved.
+      FcNativeVideoThumbnailPlatform.instance = _FakeThumbnailPlatform(
+        () async => _jpeg(1024, 1820),
+      );
+
+      final result = await generateThumbnails(video, mimeType: 'video/mp4');
+
+      final preview = img.decodeJpg(result!.preview)!;
+      expect(preview.width, 1024);
+      expect(preview.height, 1820);
+      expect(img.decodeJpg(result.thumb)!.width, 256);
     });
 
     test('infers the video MIME type from the file extension', () async {
@@ -92,7 +120,8 @@ void main() {
       final result = await generateThumbnails(video);
 
       expect(fake.calls, hasLength(1));
-      // Narrower than both targets: never upscaled.
+      // Thumb is downscaled to 256; the preview target (1024) is wider
+      // than the frame, so it is kept as-is rather than upscaled.
       expect(img.decodeJpg(result!.thumb)!.width, 256);
       expect(img.decodeJpg(result.preview)!.width, 640);
     });

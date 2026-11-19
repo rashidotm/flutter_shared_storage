@@ -63,6 +63,8 @@ MaterialApp(
 );
 ```
 
+`MaterialUiCompatibilityBridge` is itself **deprecated**. Flutter marks it as a temporary migration utility, so expect `deprecated_member_use` infos, and plan to remove it once those packages migrate. Within `material_ui` 1.x it stays available; removing it would be a major bump of `material_ui`.
+
 You don't need to do this for the gallery's own dependencies. `CloudMediaViewer` already bridges `chewie`.
 
 ## 4. Localization delegates
@@ -110,8 +112,9 @@ After upgrading plugins, run `flutter clean` once. Stale Kotlin build output fro
 
 ## 7. Behaviour notes
 
-- `generateThumbnails` keeps its contract: `null` means "upload without variants". It now also returns `null`, instead of throwing, when the native decoder can't read a video.
-- Video thumbnails are taken from the start of the clip, as before. Desktop platforms (macOS, Windows, Linux) are now supported by the thumbnail plugin, though the gallery as a whole is still tested on Android and iOS only.
+- `generateThumbnails` keeps its contract: `null` means "upload without variants". It also returns `null` (and logs via `debugPrint`) when the native decoder can't read a video. Setup errors such as a `MissingPluginException` still throw, so a misconfigured app doesn't silently lose every thumbnail.
+- Video thumbnails are still taken from the first frame and are limited by width only, so portrait clips keep a 1024px-wide preview, as in 0.6.x.
+- Supported platforms are still **Android and iOS**. `fc_native_video_thumbnail` also builds for desktop, but on Windows it returns square frames and can't seek, so desktop thumbnails would not match the 256w/1024w aspect-preserving output.
 
 ## Reference
 

@@ -32,13 +32,20 @@ but host apps have to change how they are built. See
 - **Android builds on Gradle 9 again.** `video_thumbnail` (unmaintained;
   `jcenter()` + AGP 4.1) is replaced by `fc_native_video_thumbnail`
   ^4.0.0. Frames are taken in memory, so there is no temp file, and
-  still from the first frame as before. A video the native decoder
-  can't read now makes `generateThumbnails` return `null` instead of
-  throwing, keeping its "upload without variants" contract (#1).
+  still from the first frame and limited by width only, so portrait
+  clips keep a 1024px-wide preview, as before. A native decode failure
+  (`PlatformException`) makes `generateThumbnails` return `null`,
+  keeping its "upload without variants" contract. Setup errors such as
+  `MissingPluginException` still propagate (#1).
 - `CloudMediaViewer` wraps `chewie`, which still uses
   `flutter/material.dart`, inline and in fullscreen, in
   `MaterialUiCompatibilityBridge`, so the player controls keep the
-  app's theme and localizations (#2).
+  app's theme and localizations (#2). The bridge is a deprecated
+  migration utility, available throughout `material_ui` 1.x. It will be
+  removed once chewie migrates (#4).
+- `CloudMediaViewer` no longer leaks a `VideoPlayerController` when a
+  video page is closed or swiped away before it finishes initializing,
+  or when initialization fails.
 
 ### Internal
 
