@@ -12,7 +12,7 @@ A federated Flutter package suite for storing files and folders in the cloud, wi
 | [`cloud_storage_platform_interface`](packages/cloud_storage_platform_interface) | Backend-agnostic contract: `CloudStorage`, `CloudNode`, `UploadTask`, etc. Depend on this if you're writing a new backend. |
 | [`cloud_storage_firebase`](packages/cloud_storage_firebase) | Firebase Storage + Firestore implementation of the interface. |
 | [`cloud_storage`](packages/cloud_storage) | Umbrella package. Re-exports the interface and the default Firebase implementation. Depend on this from app code. |
-| [`cloud_storage_gallery`](packages/cloud_storage_gallery) | Optional photo/video viewer + folder grid widgets. |
+| [`cloud_storage_gallery`](packages/cloud_storage_gallery) | Optional photo/video viewer + folder grid widgets. Built on [`material_ui`](https://pub.dev/packages/material_ui). Upgrading from 0.6.x? See its [migration guide](packages/cloud_storage_gallery/MIGRATION.md). |
 
 Plus:
 
@@ -44,6 +44,8 @@ Plus:
 
 ## Getting started
 
+Requires **Flutter 3.47+** (CI and local dev use 3.50.0) and [Melos](https://melos.invertase.dev).
+
 ```bash
 dart pub global activate melos
 melos bootstrap
@@ -52,4 +54,4 @@ melos run analyze
 
 ## Platforms
 
-First release targets **Android** and **iOS**. Web/desktop can be added by the Firebase implementation since `firebase_storage` and `cloud_firestore` already support them — the gallery package's video viewer is the main blocker.
+Targets **Android** (minSdk 24, Gradle 9 / AGP 9) and **iOS** (16.0+). Web/desktop can be added by the Firebase implementation since `firebase_storage` and `cloud_firestore` already support them — the gallery package's video viewer is the main blocker.
