@@ -117,21 +117,81 @@ class CustomTheme {
     final titleFontFamily = 'Rubik';
     final bodyFontFamily = 'Rubik';
     final textTheme = TextTheme(
-      displayLarge: TextStyle(fontSize: 57.0, fontWeight: FontWeight.bold, color: onThemeBackgroundColor, fontFamily: titleFontFamily),
-      displayMedium: TextStyle(fontSize: 45.0, fontWeight: FontWeight.w700, color: onThemeBackgroundColor, fontFamily: titleFontFamily),
-      displaySmall: TextStyle(fontSize: 36.0, fontWeight: FontWeight.w600, color: onThemeBackgroundColor, fontFamily: titleFontFamily),
-      headlineLarge: TextStyle(fontSize: 32.0, fontWeight: FontWeight.w600, color: onThemeBackgroundColor, fontFamily: titleFontFamily),
-      headlineMedium: TextStyle(fontSize: 28.0, fontWeight: FontWeight.w600, color: onThemeBackgroundColor, fontFamily: titleFontFamily),
-      headlineSmall: TextStyle(fontSize: 24.0, fontWeight: FontWeight.w600, color: onThemeBackgroundColor, fontFamily: titleFontFamily),
-      titleLarge: TextStyle(fontSize: 22.0, fontWeight: FontWeight.w600, color: onThemeBackgroundColor, fontFamily: titleFontFamily),
-      titleMedium: TextStyle(fontSize: 16.0, fontWeight: FontWeight.w600, color: onThemeBackgroundColor, fontFamily: titleFontFamily),
-      titleSmall: TextStyle(fontSize: 14.0, fontWeight: FontWeight.w600, color: onThemeBackgroundColor, fontFamily: titleFontFamily),
-      labelLarge: TextStyle(fontSize: 14.0, fontWeight: FontWeight.w700, color: onThemeBackgroundColor, fontFamily: bodyFontFamily),
-      labelMedium: TextStyle(fontSize: 12.0, fontWeight: FontWeight.w700, color: onThemeBackgroundColor, fontFamily: bodyFontFamily),
-      labelSmall: TextStyle(fontSize: 11.0, fontWeight: FontWeight.w700, color: onThemeBackgroundColor, fontFamily: bodyFontFamily),
-      bodyLarge: TextStyle(fontSize: 16.0, fontWeight: FontWeight.w700, color: onThemeBackgroundColor, fontFamily: bodyFontFamily),
-      bodyMedium: TextStyle(fontSize: 14.0, fontWeight: FontWeight.w700, color: onThemeBackgroundColor, fontFamily: bodyFontFamily),
-      bodySmall: TextStyle(fontSize: 12.0, fontWeight: FontWeight.w600, color: onThemeBackgroundColor, fontFamily: bodyFontFamily),
+      displayLarge: TextStyle(
+          fontSize: 57.0,
+          fontWeight: FontWeight.bold,
+          color: onThemeBackgroundColor,
+          fontFamily: titleFontFamily),
+      displayMedium: TextStyle(
+          fontSize: 45.0,
+          fontWeight: FontWeight.w700,
+          color: onThemeBackgroundColor,
+          fontFamily: titleFontFamily),
+      displaySmall: TextStyle(
+          fontSize: 36.0,
+          fontWeight: FontWeight.w600,
+          color: onThemeBackgroundColor,
+          fontFamily: titleFontFamily),
+      headlineLarge: TextStyle(
+          fontSize: 32.0,
+          fontWeight: FontWeight.w600,
+          color: onThemeBackgroundColor,
+          fontFamily: titleFontFamily),
+      headlineMedium: TextStyle(
+          fontSize: 28.0,
+          fontWeight: FontWeight.w600,
+          color: onThemeBackgroundColor,
+          fontFamily: titleFontFamily),
+      headlineSmall: TextStyle(
+          fontSize: 24.0,
+          fontWeight: FontWeight.w600,
+          color: onThemeBackgroundColor,
+          fontFamily: titleFontFamily),
+      titleLarge: TextStyle(
+          fontSize: 22.0,
+          fontWeight: FontWeight.w600,
+          color: onThemeBackgroundColor,
+          fontFamily: titleFontFamily),
+      titleMedium: TextStyle(
+          fontSize: 16.0,
+          fontWeight: FontWeight.w600,
+          color: onThemeBackgroundColor,
+          fontFamily: titleFontFamily),
+      titleSmall: TextStyle(
+          fontSize: 14.0,
+          fontWeight: FontWeight.w600,
+          color: onThemeBackgroundColor,
+          fontFamily: titleFontFamily),
+      labelLarge: TextStyle(
+          fontSize: 14.0,
+          fontWeight: FontWeight.w700,
+          color: onThemeBackgroundColor,
+          fontFamily: bodyFontFamily),
+      labelMedium: TextStyle(
+          fontSize: 12.0,
+          fontWeight: FontWeight.w700,
+          color: onThemeBackgroundColor,
+          fontFamily: bodyFontFamily),
+      labelSmall: TextStyle(
+          fontSize: 11.0,
+          fontWeight: FontWeight.w700,
+          color: onThemeBackgroundColor,
+          fontFamily: bodyFontFamily),
+      bodyLarge: TextStyle(
+          fontSize: 16.0,
+          fontWeight: FontWeight.w700,
+          color: onThemeBackgroundColor,
+          fontFamily: bodyFontFamily),
+      bodyMedium: TextStyle(
+          fontSize: 14.0,
+          fontWeight: FontWeight.w700,
+          color: onThemeBackgroundColor,
+          fontFamily: bodyFontFamily),
+      bodySmall: TextStyle(
+          fontSize: 12.0,
+          fontWeight: FontWeight.w600,
+          color: onThemeBackgroundColor,
+          fontFamily: bodyFontFamily),
     );
     final iconTheme = IconThemeData(
       color: iconColor,
@@ -212,7 +272,8 @@ class CustomTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: elevatedButtonBgColor,
           foregroundColor: elevatedButtonTextColor,
-          textStyle: textTheme.bodyLarge!.copyWith(fontFamily: buttonFontFamily),
+          textStyle:
+              textTheme.bodyLarge!.copyWith(fontFamily: buttonFontFamily),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10.0),
             side: BorderSide(
@@ -353,7 +414,8 @@ class CustomTheme {
       'recentChangeMaleColor': recentChangeMaleColor.toARGB32(),
       'recentChangeFemaleColor': recentChangeFemaleColor.toARGB32(),
       'recentChangeNewChangeColor': recentChangeNewChangeColor.toARGB32(),
-      'recentChangeUpdatingChangeColor': recentChangeUpdatingChangeColor.toARGB32(),
+      'recentChangeUpdatingChangeColor':
+          recentChangeUpdatingChangeColor.toARGB32(),
       'sectorBgColor': sectorBgColor.toARGB32(),
       'sectorIconColor': sectorIconColor.toARGB32(),
       'sectorTextColor': sectorTextColor.toARGB32(),
@@ -371,58 +433,115 @@ class CustomTheme {
       return defaultTheme;
     }
     return CustomTheme(
-      themeBackgroundColor: Color(getValue(map['themeBackgroundColor']) ?? defaultTheme.themeBackgroundColor.toARGB32()),
-      onThemeBackgroundColor: Color(getValue(map['onThemeBackgroundColor']) ?? defaultTheme.onThemeBackgroundColor.toARGB32()),
-      secondary: Color(getValue(map['secondary']) ?? defaultTheme.secondary.toARGB32()),
-      onSecondary: Color(getValue(map['onSecondary']) ?? defaultTheme.onSecondary.toARGB32()),
-      onSurface: Color(getValue(map['onSurface']) ?? defaultTheme.onSurface.toARGB32()),
-      iconColor: Color(getValue(map['iconColor']) ?? defaultTheme.iconColor.toARGB32()),
-      iconSplashColor: Color(getValue(map['iconSplashColor']) ?? defaultTheme.iconSplashColor.toARGB32()),
-      iconMainFillColor: Color(getValue(map['iconMainFillColor']) ?? defaultTheme.iconMainFillColor.toARGB32()),
-      iconMainShadeColor: Color(getValue(map['iconMainShadeColor']) ?? defaultTheme.iconMainShadeColor.toARGB32()),
-      iconSecondaryFillColor: Color(getValue(map['iconSecondaryFillColor']) ?? defaultTheme.iconSecondaryFillColor.toARGB32()),
-      iconSecondaryShadeColor: Color(getValue(map['iconSecondaryShadeColor']) ?? defaultTheme.iconSecondaryShadeColor.toARGB32()),
-      iconSkinColor: Color(getValue(map['iconSkinColor']) ?? defaultTheme.iconSkinColor.toARGB32()),
-      iconSkinShadeColor: Color(getValue(map['iconSkinShadeColor']) ?? defaultTheme.iconSkinShadeColor.toARGB32()),
-      iconBalloonColor: Color(getValue(map['iconBaloonColor']) ?? defaultTheme.iconBalloonColor.toARGB32()),
-      iconBalloonShadeColor: Color(getValue(map['iconBaloonShadeColor']) ?? defaultTheme.iconBalloonShadeColor.toARGB32()),
-      iconPaperColor: Color(getValue(map['iconPaperColor']) ?? defaultTheme.iconPaperColor.toARGB32()),
-      iconPaperShadeColor: Color(getValue(map['iconPaperShadeColor']) ?? defaultTheme.iconPaperShadeColor.toARGB32()),
-      iconBorderColor: Color(getValue(map['iconBorderColor']) ?? defaultTheme.iconBorderColor.toARGB32()),
-      iconTitleColor: Color(getValue(map['iconTitleColor']) ?? defaultTheme.iconTitleColor.toARGB32()),
-      appBarBgColor: Color(getValue(map['appBarBgColor']) ?? defaultTheme.appBarBgColor.toARGB32()),
-      appBarTextColor: Color(getValue(map['appBarTextColor']) ?? defaultTheme.appBarTextColor.toARGB32()),
-      snackBarBgColor: Color(getValue(map['snackBarBgColor']) ?? defaultTheme.snackBarBgColor.toARGB32()),
-      snackBarContentColor: Color(getValue(map['snackBarContentColor']) ?? defaultTheme.snackBarContentColor.toARGB32()),
-      scaffoldBackgroundColor: Color(getValue(map['scaffoldBackgroundColor']) ?? defaultTheme.scaffoldBackgroundColor.toARGB32()),
-      dialogBgColor: Color(getValue(map['dialogBgColor']) ?? defaultTheme.dialogBgColor.toARGB32()),
-      dialogTextColor: Color(getValue(map['dialogTextColor']) ?? defaultTheme.dialogTextColor.toARGB32()),
-      drawerBgColor: Color(getValue(map['drawerBgColor']) ?? defaultTheme.drawerBgColor.toARGB32()),
-      selectedTileColor: Color(getValue(map['selectedTileColor']) ?? defaultTheme.selectedTileColor.toARGB32()),
-      elevatedButtonBgColor: Color(getValue(map['elevatedButtonBgColor']) ?? defaultTheme.elevatedButtonBgColor.toARGB32()),
-      elevatedButtonTextColor: Color(getValue(map['elevatedButtonTextColor']) ?? defaultTheme.elevatedButtonTextColor.toARGB32()),
-      elevatedButtonBorderColor: Color(getValue(map['elevatedButtonBorderColor']) ?? defaultTheme.elevatedButtonBorderColor.toARGB32()),
-      textButtonColor: Color(getValue(map['textButtonColor']) ?? defaultTheme.textButtonColor.toARGB32()),
-      errorBgColor: Color(getValue(map['errorBgColor']) ?? defaultTheme.errorBgColor.toARGB32()),
-      errorTextColor: Color(getValue(map['errorTextColor']) ?? defaultTheme.errorTextColor.toARGB32()),
-      floatingButtonBgColor: Color(getValue(map['floatingButtonBgColor']) ?? defaultTheme.floatingButtonBgColor.toARGB32()),
-      floatingButtonContentColor: Color(getValue(map['floatingButtonContentColor']) ?? defaultTheme.floatingButtonContentColor.toARGB32()),
-      badgeBgColor: Color(getValue(map['badgeBgColor']) ?? defaultTheme.badgeBgColor.toARGB32()),
-      badgeContentColor: Color(getValue(map['badgeContentColor']) ?? defaultTheme.badgeContentColor.toARGB32()),
-      recentChangeMainPersonColor: Color(getValue(map['recentChangeMainPersonColor']) ?? defaultTheme.recentChangeMainPersonColor.toARGB32()),
-      recentChangeMaleColor: Color(getValue(map['recentChangeMaleColor']) ?? defaultTheme.recentChangeMaleColor.toARGB32()),
-      recentChangeFemaleColor: Color(getValue(map['recentChangeFemaleColor']) ?? defaultTheme.recentChangeFemaleColor.toARGB32()),
-      recentChangeNewChangeColor: Color(getValue(map['recentChangeNewChangeColor']) ?? defaultTheme.recentChangeNewChangeColor.toARGB32()),
-      recentChangeUpdatingChangeColor: Color(getValue(map['recentChangeUpdatingChangeColor']) ?? defaultTheme.recentChangeUpdatingChangeColor.toARGB32()),
-      sectorBgColor: Color(getValue(map['sectorBgColor']) ?? defaultTheme.sectorBgColor.toARGB32()),
-      sectorIconColor: Color(getValue(map['sectorIconColor']) ?? defaultTheme.sectorIconColor.toARGB32()),
-      sectorTextColor: Color(getValue(map['sectorTextColor']) ?? defaultTheme.sectorTextColor.toARGB32()),
-      sectorToggleBgColor: Color(getValue(map['sectorToggleBgColor']) ?? defaultTheme.sectorToggleBgColor.toARGB32()),
-      sectorToggleTextColor: Color(getValue(map['sectorToggleTextColor']) ?? defaultTheme.sectorToggleTextColor.toARGB32()),
-      businessBgColor: Color(getValue(map['businessBgColor']) ?? defaultTheme.businessBgColor.toARGB32()),
-      businessIconColor: Color(getValue(map['businessIconColor']) ?? defaultTheme.businessIconColor.toARGB32()),
-      businessTextColor: Color(getValue(map['businessTextColor']) ?? defaultTheme.businessTextColor.toARGB32()),
-      businessGraphLineColor: Color(getValue(map['businessGraphLineColor']) ?? defaultTheme.businessGraphLineColor.toARGB32()),
+      themeBackgroundColor: Color(getValue(map['themeBackgroundColor']) ??
+          defaultTheme.themeBackgroundColor.toARGB32()),
+      onThemeBackgroundColor: Color(getValue(map['onThemeBackgroundColor']) ??
+          defaultTheme.onThemeBackgroundColor.toARGB32()),
+      secondary: Color(
+          getValue(map['secondary']) ?? defaultTheme.secondary.toARGB32()),
+      onSecondary: Color(
+          getValue(map['onSecondary']) ?? defaultTheme.onSecondary.toARGB32()),
+      onSurface: Color(
+          getValue(map['onSurface']) ?? defaultTheme.onSurface.toARGB32()),
+      iconColor: Color(
+          getValue(map['iconColor']) ?? defaultTheme.iconColor.toARGB32()),
+      iconSplashColor: Color(getValue(map['iconSplashColor']) ??
+          defaultTheme.iconSplashColor.toARGB32()),
+      iconMainFillColor: Color(getValue(map['iconMainFillColor']) ??
+          defaultTheme.iconMainFillColor.toARGB32()),
+      iconMainShadeColor: Color(getValue(map['iconMainShadeColor']) ??
+          defaultTheme.iconMainShadeColor.toARGB32()),
+      iconSecondaryFillColor: Color(getValue(map['iconSecondaryFillColor']) ??
+          defaultTheme.iconSecondaryFillColor.toARGB32()),
+      iconSecondaryShadeColor: Color(getValue(map['iconSecondaryShadeColor']) ??
+          defaultTheme.iconSecondaryShadeColor.toARGB32()),
+      iconSkinColor: Color(getValue(map['iconSkinColor']) ??
+          defaultTheme.iconSkinColor.toARGB32()),
+      iconSkinShadeColor: Color(getValue(map['iconSkinShadeColor']) ??
+          defaultTheme.iconSkinShadeColor.toARGB32()),
+      iconBalloonColor: Color(getValue(map['iconBaloonColor']) ??
+          defaultTheme.iconBalloonColor.toARGB32()),
+      iconBalloonShadeColor: Color(getValue(map['iconBaloonShadeColor']) ??
+          defaultTheme.iconBalloonShadeColor.toARGB32()),
+      iconPaperColor: Color(getValue(map['iconPaperColor']) ??
+          defaultTheme.iconPaperColor.toARGB32()),
+      iconPaperShadeColor: Color(getValue(map['iconPaperShadeColor']) ??
+          defaultTheme.iconPaperShadeColor.toARGB32()),
+      iconBorderColor: Color(getValue(map['iconBorderColor']) ??
+          defaultTheme.iconBorderColor.toARGB32()),
+      iconTitleColor: Color(getValue(map['iconTitleColor']) ??
+          defaultTheme.iconTitleColor.toARGB32()),
+      appBarBgColor: Color(getValue(map['appBarBgColor']) ??
+          defaultTheme.appBarBgColor.toARGB32()),
+      appBarTextColor: Color(getValue(map['appBarTextColor']) ??
+          defaultTheme.appBarTextColor.toARGB32()),
+      snackBarBgColor: Color(getValue(map['snackBarBgColor']) ??
+          defaultTheme.snackBarBgColor.toARGB32()),
+      snackBarContentColor: Color(getValue(map['snackBarContentColor']) ??
+          defaultTheme.snackBarContentColor.toARGB32()),
+      scaffoldBackgroundColor: Color(getValue(map['scaffoldBackgroundColor']) ??
+          defaultTheme.scaffoldBackgroundColor.toARGB32()),
+      dialogBgColor: Color(getValue(map['dialogBgColor']) ??
+          defaultTheme.dialogBgColor.toARGB32()),
+      dialogTextColor: Color(getValue(map['dialogTextColor']) ??
+          defaultTheme.dialogTextColor.toARGB32()),
+      drawerBgColor: Color(getValue(map['drawerBgColor']) ??
+          defaultTheme.drawerBgColor.toARGB32()),
+      selectedTileColor: Color(getValue(map['selectedTileColor']) ??
+          defaultTheme.selectedTileColor.toARGB32()),
+      elevatedButtonBgColor: Color(getValue(map['elevatedButtonBgColor']) ??
+          defaultTheme.elevatedButtonBgColor.toARGB32()),
+      elevatedButtonTextColor: Color(getValue(map['elevatedButtonTextColor']) ??
+          defaultTheme.elevatedButtonTextColor.toARGB32()),
+      elevatedButtonBorderColor: Color(
+          getValue(map['elevatedButtonBorderColor']) ??
+              defaultTheme.elevatedButtonBorderColor.toARGB32()),
+      textButtonColor: Color(getValue(map['textButtonColor']) ??
+          defaultTheme.textButtonColor.toARGB32()),
+      errorBgColor: Color(getValue(map['errorBgColor']) ??
+          defaultTheme.errorBgColor.toARGB32()),
+      errorTextColor: Color(getValue(map['errorTextColor']) ??
+          defaultTheme.errorTextColor.toARGB32()),
+      floatingButtonBgColor: Color(getValue(map['floatingButtonBgColor']) ??
+          defaultTheme.floatingButtonBgColor.toARGB32()),
+      floatingButtonContentColor: Color(
+          getValue(map['floatingButtonContentColor']) ??
+              defaultTheme.floatingButtonContentColor.toARGB32()),
+      badgeBgColor: Color(getValue(map['badgeBgColor']) ??
+          defaultTheme.badgeBgColor.toARGB32()),
+      badgeContentColor: Color(getValue(map['badgeContentColor']) ??
+          defaultTheme.badgeContentColor.toARGB32()),
+      recentChangeMainPersonColor: Color(
+          getValue(map['recentChangeMainPersonColor']) ??
+              defaultTheme.recentChangeMainPersonColor.toARGB32()),
+      recentChangeMaleColor: Color(getValue(map['recentChangeMaleColor']) ??
+          defaultTheme.recentChangeMaleColor.toARGB32()),
+      recentChangeFemaleColor: Color(getValue(map['recentChangeFemaleColor']) ??
+          defaultTheme.recentChangeFemaleColor.toARGB32()),
+      recentChangeNewChangeColor: Color(
+          getValue(map['recentChangeNewChangeColor']) ??
+              defaultTheme.recentChangeNewChangeColor.toARGB32()),
+      recentChangeUpdatingChangeColor: Color(
+          getValue(map['recentChangeUpdatingChangeColor']) ??
+              defaultTheme.recentChangeUpdatingChangeColor.toARGB32()),
+      sectorBgColor: Color(getValue(map['sectorBgColor']) ??
+          defaultTheme.sectorBgColor.toARGB32()),
+      sectorIconColor: Color(getValue(map['sectorIconColor']) ??
+          defaultTheme.sectorIconColor.toARGB32()),
+      sectorTextColor: Color(getValue(map['sectorTextColor']) ??
+          defaultTheme.sectorTextColor.toARGB32()),
+      sectorToggleBgColor: Color(getValue(map['sectorToggleBgColor']) ??
+          defaultTheme.sectorToggleBgColor.toARGB32()),
+      sectorToggleTextColor: Color(getValue(map['sectorToggleTextColor']) ??
+          defaultTheme.sectorToggleTextColor.toARGB32()),
+      businessBgColor: Color(getValue(map['businessBgColor']) ??
+          defaultTheme.businessBgColor.toARGB32()),
+      businessIconColor: Color(getValue(map['businessIconColor']) ??
+          defaultTheme.businessIconColor.toARGB32()),
+      businessTextColor: Color(getValue(map['businessTextColor']) ??
+          defaultTheme.businessTextColor.toARGB32()),
+      businessGraphLineColor: Color(getValue(map['businessGraphLineColor']) ??
+          defaultTheme.businessGraphLineColor.toARGB32()),
     );
   }
 
