@@ -46,12 +46,11 @@ class CloudNodeSort {
     CloudNodeSortField? field,
     bool? ascending,
     bool? foldersFirst,
-  }) =>
-      CloudNodeSort(
-        field: field ?? this.field,
-        ascending: ascending ?? this.ascending,
-        foldersFirst: foldersFirst ?? this.foldersFirst,
-      );
+  }) => CloudNodeSort(
+    field: field ?? this.field,
+    ascending: ascending ?? this.ascending,
+    foldersFirst: foldersFirst ?? this.foldersFirst,
+  );
 
   @override
   bool operator ==(Object other) =>
@@ -75,8 +74,9 @@ List<CloudNode> sortCloudNodes(List<CloudNode> nodes, CloudNodeSort sort) {
       if (aIsFolder != bIsFolder) return aIsFolder ? -1 : 1;
     }
     final cmp = switch (sort.field) {
-      CloudNodeSortField.name =>
-        a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+      CloudNodeSortField.name => a.name.toLowerCase().compareTo(
+        b.name.toLowerCase(),
+      ),
       CloudNodeSortField.createdAt => a.createdAt.compareTo(b.createdAt),
       CloudNodeSortField.updatedAt => a.updatedAt.compareTo(b.updatedAt),
       CloudNodeSortField.size => _sizeOf(a).compareTo(_sizeOf(b)),
@@ -85,8 +85,9 @@ List<CloudNode> sortCloudNodes(List<CloudNode> nodes, CloudNodeSort sort) {
     // Stable tiebreaker: nodes with the same primary key sort by name so
     // the order is deterministic even when the primary comparator is a
     // draw (e.g. two files with identical sizes).
-    final tie =
-        cmp != 0 ? cmp : a.name.toLowerCase().compareTo(b.name.toLowerCase());
+    final tie = cmp != 0
+        ? cmp
+        : a.name.toLowerCase().compareTo(b.name.toLowerCase());
     return sort.ascending ? tie : -tie;
   });
   return sorted;
@@ -95,7 +96,7 @@ List<CloudNode> sortCloudNodes(List<CloudNode> nodes, CloudNodeSort sort) {
 int _sizeOf(CloudNode n) => n is CloudFile ? n.sizeBytes : 0;
 
 int _typeOrder(CloudNode n) => switch (n) {
-      CloudFolder() => 0,
-      CloudLink() => 1,
-      CloudFile() => 2,
-    };
+  CloudFolder() => 0,
+  CloudLink() => 1,
+  CloudFile() => 2,
+};

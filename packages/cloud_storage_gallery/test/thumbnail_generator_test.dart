@@ -56,11 +56,10 @@ Uint8List _jpeg(int width, int height) =>
 
 /// Writes a [width]x[height] JPEG to the requested destination, like the
 /// real plugin does on success.
-Future<bool> Function(String) _writes(int width, int height) =>
-    (dest) async {
-      await File(dest).writeAsBytes(_jpeg(width, height));
-      return true;
-    };
+Future<bool> Function(String) _writes(int width, int height) => (dest) async {
+  await File(dest).writeAsBytes(_jpeg(width, height));
+  return true;
+};
 
 void main() {
   late FcNativeVideoThumbnailPlatform originalThumbnailer;
@@ -83,34 +82,40 @@ void main() {
   group('generateThumbnails — video', () {
     final video = File('clip.mp4');
 
-    test('extracts one JPEG frame into the temp dir, resizes, deletes it',
-        () async {
-      final fake = _FakeThumbnailPlatform(_writes(1920, 1080));
-      FcNativeVideoThumbnailPlatform.instance = fake;
+    test(
+      'extracts one JPEG frame into the temp dir, resizes, deletes it',
+      () async {
+        final fake = _FakeThumbnailPlatform(_writes(1920, 1080));
+        FcNativeVideoThumbnailPlatform.instance = fake;
 
-      final result = await generateThumbnails(video, mimeType: 'video/mp4');
+        final result = await generateThumbnails(video, mimeType: 'video/mp4');
 
-      expect(img.decodeJpg(result!.thumb)!.width, 256);
-      expect(img.decodeJpg(result.preview)!.width, 1024);
-      final call = fake.calls.single;
-      expect(call['srcFile'], video.path);
-      expect(p(call['destFile']! as String), startsWith(p(tmp.path)));
-      expect(call['width'], 1024);
-      // Only the width limits the frame (see the portrait test).
-      expect(call['height'], 4096);
-      expect(call['format'], 'jpeg');
-      expect(call['quality'], 85);
-      // First frame, matching video_thumbnail's default.
-      expect(call['at'], {'atUs': 0});
-      expect(File(call['destFile']! as String).existsSync(), isFalse,
-          reason: 'temp frame should be deleted');
-    });
+        expect(img.decodeJpg(result!.thumb)!.width, 256);
+        expect(img.decodeJpg(result.preview)!.width, 1024);
+        final call = fake.calls.single;
+        expect(call['srcFile'], video.path);
+        expect(p(call['destFile']! as String), startsWith(p(tmp.path)));
+        expect(call['width'], 1024);
+        // Only the width limits the frame (see the portrait test).
+        expect(call['height'], 4096);
+        expect(call['format'], 'jpeg');
+        expect(call['quality'], 85);
+        // First frame, matching video_thumbnail's default.
+        expect(call['at'], {'atUs': 0});
+        expect(
+          File(call['destFile']! as String).existsSync(),
+          isFalse,
+          reason: 'temp frame should be deleted',
+        );
+      },
+    );
 
     test('portrait frames keep a 1024px-wide preview', () async {
       // What the plugin produces for a 1080x1920 clip fitted inside
       // 1024x4096: width-limited, aspect preserved.
-      FcNativeVideoThumbnailPlatform.instance =
-          _FakeThumbnailPlatform(_writes(1024, 1820));
+      FcNativeVideoThumbnailPlatform.instance = _FakeThumbnailPlatform(
+        _writes(1024, 1820),
+      );
 
       final result = await generateThumbnails(video, mimeType: 'video/mp4');
 
@@ -120,8 +125,9 @@ void main() {
     });
 
     test('returns null when the plugin creates no frame', () async {
-      FcNativeVideoThumbnailPlatform.instance =
-          _FakeThumbnailPlatform((_) async => false);
+      FcNativeVideoThumbnailPlatform.instance = _FakeThumbnailPlatform(
+        (_) async => false,
+      );
 
       expect(await generateThumbnails(video, mimeType: 'video/mp4'), isNull);
     });

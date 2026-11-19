@@ -12,9 +12,8 @@ import 'package:cloud_storage_platform_interface/cloud_storage_platform_interfac
 /// override on a per-test basis by extending this class if a specific
 /// path needs to be exercised.
 class FakeCloudStorage implements CloudStorage {
-  FakeCloudStorage({
-    Map<String, List<CloudNode>>? children,
-  }) : _children = <String, List<CloudNode>>{...?children};
+  FakeCloudStorage({Map<String, List<CloudNode>>? children})
+    : _children = <String, List<CloudNode>>{...?children};
 
   final Map<String, List<CloudNode>> _children;
   final Map<String, StreamController<List<CloudNode>>> _controllers = {};
@@ -72,8 +71,7 @@ class FakeCloudStorage implements CloudStorage {
   Future<CloudFolder> createFolder({
     required String parentId,
     required String name,
-  }) =>
-      throw UnimplementedError('createFolder');
+  }) => throw UnimplementedError('createFolder');
 
   @override
   Future<void> renameFolder(String folderId, String newName) =>
@@ -95,8 +93,7 @@ class FakeCloudStorage implements CloudStorage {
     String? mimeType,
     Source? thumbnail,
     Source? preview,
-  }) =>
-      throw UnimplementedError('upload');
+  }) => throw UnimplementedError('upload');
 
   @override
   Future<File> download(String fileId, {bool useCache = true}) =>
@@ -123,16 +120,14 @@ class FakeCloudStorage implements CloudStorage {
     String nodeId, {
     required Source thumbnail,
     Source? preview,
-  }) =>
-      throw UnimplementedError('setThumbnail');
+  }) => throw UnimplementedError('setThumbnail');
 
   @override
   Future<CloudLink> createLink({
     required String parentId,
     required String name,
     required String url,
-  }) =>
-      throw UnimplementedError('createLink');
+  }) => throw UnimplementedError('createLink');
 
   @override
   Future<void> updateLinkUrl(String linkId, String newUrl) =>
@@ -171,19 +166,18 @@ CloudFile makeFile(
   String parentId = '',
   String mimeType = 'application/pdf',
   int sizeBytes = 100,
-}) =>
-    CloudFile(
-      id: id ?? 'f-$name',
-      name: name,
-      parentId: parentId,
-      path: '/$name',
-      createdAt: _epoch,
-      updatedAt: _epoch,
-      mimeType: mimeType,
-      sizeBytes: sizeBytes,
-      storagePath: '/$name',
-      downloadUrl: 'https://example.com/$name',
-    );
+}) => CloudFile(
+  id: id ?? 'f-$name',
+  name: name,
+  parentId: parentId,
+  path: '/$name',
+  createdAt: _epoch,
+  updatedAt: _epoch,
+  mimeType: mimeType,
+  sizeBytes: sizeBytes,
+  storagePath: '/$name',
+  downloadUrl: 'https://example.com/$name',
+);
 
 CloudLink makeLink(String name, {String? id, String parentId = ''}) =>
     CloudLink(

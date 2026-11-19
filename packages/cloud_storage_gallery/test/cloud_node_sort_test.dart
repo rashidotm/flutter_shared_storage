@@ -7,74 +7,79 @@ import 'package:flutter_test/flutter_test.dart';
 final _epoch = DateTime.utc(2026, 1, 1);
 
 CloudFolder _folder(String name, {DateTime? at}) => CloudFolder(
-      id: 'F-$name',
-      name: name,
-      parentId: '',
-      path: '/$name',
-      createdAt: at ?? _epoch,
-      updatedAt: at ?? _epoch,
-    );
+  id: 'F-$name',
+  name: name,
+  parentId: '',
+  path: '/$name',
+  createdAt: at ?? _epoch,
+  updatedAt: at ?? _epoch,
+);
 
 CloudFile _file(String name, {int size = 0, DateTime? at}) => CloudFile(
-      id: 'f-$name',
-      name: name,
-      parentId: '',
-      path: '/$name',
-      createdAt: at ?? _epoch,
-      updatedAt: at ?? _epoch,
-      mimeType: 'application/octet-stream',
-      sizeBytes: size,
-      storagePath: '/$name',
-      downloadUrl: 'https://example.com/$name',
-    );
+  id: 'f-$name',
+  name: name,
+  parentId: '',
+  path: '/$name',
+  createdAt: at ?? _epoch,
+  updatedAt: at ?? _epoch,
+  mimeType: 'application/octet-stream',
+  sizeBytes: size,
+  storagePath: '/$name',
+  downloadUrl: 'https://example.com/$name',
+);
 
 CloudLink _link(String name, {DateTime? at}) => CloudLink(
-      id: 'l-$name',
-      name: name,
-      parentId: '',
-      path: '/$name',
-      createdAt: at ?? _epoch,
-      updatedAt: at ?? _epoch,
-      url: 'https://example.com/$name',
-    );
+  id: 'l-$name',
+  name: name,
+  parentId: '',
+  path: '/$name',
+  createdAt: at ?? _epoch,
+  updatedAt: at ?? _epoch,
+  url: 'https://example.com/$name',
+);
 
 List<String> _names(List<CloudNode> nodes) => nodes.map((n) => n.name).toList();
 
 void main() {
   group('sortCloudNodes — name field', () {
     test('ascending is case-insensitive alphabetical', () {
-      final sorted = sortCloudNodes(
-        [_file('banana'), _file('Apple'), _file('cherry')],
-        const CloudNodeSort(),
-      );
+      final sorted = sortCloudNodes([
+        _file('banana'),
+        _file('Apple'),
+        _file('cherry'),
+      ], const CloudNodeSort());
       expect(_names(sorted), ['Apple', 'banana', 'cherry']);
     });
 
     test('descending reverses the order', () {
-      final sorted = sortCloudNodes(
-        [_file('a'), _file('b'), _file('c')],
-        const CloudNodeSort(ascending: false),
-      );
+      final sorted = sortCloudNodes([
+        _file('a'),
+        _file('b'),
+        _file('c'),
+      ], const CloudNodeSort(ascending: false));
       expect(_names(sorted), ['c', 'b', 'a']);
     });
   });
 
   group('sortCloudNodes — foldersFirst', () {
     test('true (default) groups folders before files/links', () {
-      final sorted = sortCloudNodes(
-        [_file('a'), _folder('b'), _link('c'), _folder('a')],
-        const CloudNodeSort(),
-      );
+      final sorted = sortCloudNodes([
+        _file('a'),
+        _folder('b'),
+        _link('c'),
+        _folder('a'),
+      ], const CloudNodeSort());
       // Folders first ascending → 'a' (folder), 'b' (folder), then
       // links + files by name — 'a' (file), 'c' (link).
       expect(_names(sorted), ['a', 'b', 'a', 'c']);
     });
 
     test('false interleaves folders / files / links by the sort field', () {
-      final sorted = sortCloudNodes(
-        [_file('c'), _folder('a'), _link('b')],
-        const CloudNodeSort(foldersFirst: false),
-      );
+      final sorted = sortCloudNodes([
+        _file('c'),
+        _folder('a'),
+        _link('b'),
+      ], const CloudNodeSort(foldersFirst: false));
       expect(_names(sorted), ['a', 'b', 'c']);
     });
   });
@@ -83,10 +88,10 @@ void main() {
     test('createdAt ascending is oldest-first', () {
       final oldA = _file('old', at: DateTime.utc(2020));
       final newB = _file('new', at: DateTime.utc(2026));
-      final sorted = sortCloudNodes(
-        [newB, oldA],
-        const CloudNodeSort(field: CloudNodeSortField.createdAt),
-      );
+      final sorted = sortCloudNodes([
+        newB,
+        oldA,
+      ], const CloudNodeSort(field: CloudNodeSortField.createdAt));
       expect(_names(sorted), ['old', 'new']);
     });
 
@@ -157,14 +162,11 @@ void main() {
 
     test('is stable — ties break by name deterministically', () {
       // Three files with identical sizes → tiebreak by name ascending.
-      final sorted = sortCloudNodes(
-        [
-          _file('c', size: 100),
-          _file('a', size: 100),
-          _file('b', size: 100),
-        ],
-        const CloudNodeSort(field: CloudNodeSortField.size),
-      );
+      final sorted = sortCloudNodes([
+        _file('c', size: 100),
+        _file('a', size: 100),
+        _file('b', size: 100),
+      ], const CloudNodeSort(field: CloudNodeSortField.size));
       expect(_names(sorted), ['a', 'b', 'c']);
     });
 
