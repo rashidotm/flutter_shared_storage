@@ -1,11 +1,9 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:fc_native_video_thumbnail/fc_native_video_thumbnail.dart';
 import 'package:image/image.dart' as img;
 import 'package:mime/mime.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
 
 /// Two JPEG variants produced from a source media file.
 class MediaThumbnails {
@@ -17,6 +15,8 @@ class MediaThumbnails {
   /// ~1024px wide JPEG. Suitable for full-screen previews.
   final Uint8List preview;
 }
+
+final _videoThumbnailer = FcNativeVideoThumbnail();
 
 /// Generates a thumb (256w) and preview (1024w) JPEG for [file] if the
 /// MIME type is a supported image or video. Returns `null` for unsupported
@@ -51,27 +51,25 @@ Future<MediaThumbnails?> _fromImageBytes(Uint8List bytes) async {
 }
 
 Future<MediaThumbnails?> _fromVideoFile(File file) async {
-  // video_thumbnail extracts a single frame; we then resize with `image`
-  // to get consistent widths across images and videos.
-  final tmpDir = await getTemporaryDirectory();
-  final framePath = p.join(
-    tmpDir.path,
-    'thumb-${p.basenameWithoutExtension(file.path)}.jpg',
-  );
-  final resultPath = await VideoThumbnail.thumbnailFile(
-    video: file.path,
-    thumbnailPath: framePath,
-    imageFormat: ImageFormat.JPEG,
-    maxWidth: 1024,
-    quality: 85,
-  );
-  if (resultPath == null) return null;
-  final frameBytes = await File(resultPath).readAsBytes();
+  // fc_native_video_thumbnail extracts a single frame with the platform's
+  // native decoder (MediaMetadataRetriever / AVFoundation / ...). We then
+  // resize with `image` to get consistent widths across images and videos.
+  //
+  // Unlike the old `video_thumbnail`, the plugin *throws* when it can't
+  // decode the source. Swallow that so callers keep the documented
+  // contract: `null` means "no variants, upload the original as-is".
+  final Uint8List? frameBytes;
   try {
-    await File(resultPath).delete();
+    frameBytes = await _videoThumbnailer.saveThumbnailToBytes(
+      srcFile: file.path,
+      width: 1024,
+      height: 1024,
+      quality: 85,
+    );
   } catch (_) {
-    // ignored — leaking a tempfile is fine
+    return null;
   }
+  if (frameBytes == null) return null;
   final decoded = img.decodeImage(frameBytes);
   if (decoded == null) return null;
   return MediaThumbnails(
