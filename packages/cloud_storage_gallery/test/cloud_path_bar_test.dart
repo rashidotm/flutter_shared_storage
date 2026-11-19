@@ -1,7 +1,6 @@
 import 'package:cloud_storage_gallery/cloud_storage_gallery.dart';
 import 'package:cloud_storage_platform_interface/cloud_storage_platform_interface.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'support/fake_cloud_storage.dart';
@@ -9,8 +8,7 @@ import 'support/fake_cloud_storage.dart';
 Widget _harness(Widget child) => MaterialApp(
       localizationsDelegates: const [
         CloudGalleryLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
       ],
       supportedLocales: CloudGalleryLocalizations.supportedLocales,
       locale: const Locale('en'),

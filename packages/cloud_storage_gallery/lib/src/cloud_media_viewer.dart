@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chewie/chewie.dart';
 import 'package:cloud_storage_platform_interface/cloud_storage_platform_interface.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
@@ -159,6 +159,23 @@ class _VideoPageState extends State<_VideoPage> {
           autoPlay: true,
           looping: false,
           allowFullScreen: true,
+          // Chewie pushes its fullscreen page as a new route, outside the
+          // bridge wrapped around the inline player in build(). Rebuild
+          // that page ourselves (material_ui Scaffold, black backdrop —
+          // same as Chewie's default) and bridge Chewie's legacy-Material
+          // controls there too.
+          routePageBuilder: (context, animation, secondary, provider) =>
+              Scaffold(
+            resizeToAvoidBottomInset: false,
+            body: Container(
+              alignment: Alignment.center,
+              color: Colors.black,
+              // Temporary migration utility; remove with #4 once chewie
+              // is on material_ui.
+              // ignore: deprecated_member_use
+              child: MaterialUiCompatibilityBridge(child: provider),
+            ),
+          ),
         );
       });
     } catch (e) {
@@ -185,6 +202,13 @@ class _VideoPageState extends State<_VideoPage> {
     if (c == null) {
       return const Center(child: CircularProgressIndicator());
     }
-    return Chewie(controller: c);
+    // Chewie still builds its controls with `package:flutter/material.dart`,
+    // whose Theme / MaterialLocalizations are distinct types from
+    // material_ui's. The bridge maps our ambient material_ui theme and
+    // localizations onto the legacy ones so the controls stay themed and
+    // don't assert on missing MaterialLocalizations. Drop once chewie
+    // migrates to material_ui (tracked in #4).
+    // ignore: deprecated_member_use
+    return MaterialUiCompatibilityBridge(child: Chewie(controller: c));
   }
 }
