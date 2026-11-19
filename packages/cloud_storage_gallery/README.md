@@ -78,4 +78,4 @@ dependencies:
 
 ## Dependencies
 
-Pulls in `cached_network_image`, `photo_view`, `video_player`, `chewie`, `file_picker`, `share_plus`, `image`, `video_thumbnail`, `mime`, `path`, `path_provider`. If any of these are unwanted, either fork the widgets or depend only on `cloud_storage` and build your own UI.
+Pulls in `cached_network_image`, `photo_view`, `video_player`, `chewie`, `file_picker`, `share_plus`, `image`, `fc_native_video_thumbnail`, `mime`, `path`, `path_provider`, `open_filex`, `url_launcher`. None of them depends on `material_ui`; the widgets use `package:flutter/material.dart`. If any of these are unwanted, either fork the widgets or depend only on `cloud_storage` and build your own UI.
