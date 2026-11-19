@@ -35,7 +35,12 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
-  fake_cloud_firestore: ^4.1.1
+  # 4.2.0+ targets cloud_firestore >= 6.7.1 (4.5.0: ^7.1.0). The
+  # workspace override below pins cloud_firestore < 6.7.0, and overrides
+  # bypass fake_cloud_firestore's own constraint, so without this cap a
+  # fresh resolve (CI) picks 4.5.0 against 6.6.0 and tests fail to
+  # compile. Lift together with the cloud_firestore pin (#4).
+  fake_cloud_firestore: ">=4.1.1 <4.2.0"
   firebase_storage_mocks: ^0.8.1
   mocktail: ^1.0.4
 
