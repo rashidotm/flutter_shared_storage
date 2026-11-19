@@ -32,6 +32,7 @@ class _FakeThumbnailPlatform extends FcNativeVideoThumbnailPlatform
       'width': width,
       'height': height,
       'quality': quality,
+      'at': at?.toMap(),
     });
     return onBytes();
   }
@@ -63,6 +64,8 @@ void main() {
         'width': 1024,
         'height': 1024,
         'quality': 85,
+        // First frame, matching the old video_thumbnail default.
+        'at': {'atUs': 0},
       });
     });
 

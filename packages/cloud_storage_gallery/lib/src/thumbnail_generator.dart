@@ -2,6 +2,9 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:fc_native_video_thumbnail/fc_native_video_thumbnail.dart';
+// FcVideoThumbnailTime isn't re-exported by the main library.
+import 'package:fc_native_video_thumbnail/fc_native_video_thumbnail_platform_interface.dart'
+    show FcVideoThumbnailTime, FcVideoThumbnailTimeUnit;
 import 'package:image/image.dart' as img;
 import 'package:mime/mime.dart';
 
@@ -65,6 +68,10 @@ Future<MediaThumbnails?> _fromVideoFile(File file) async {
       width: 1024,
       height: 1024,
       quality: 85,
+      // Explicitly the first frame, like video_thumbnail's default
+      // (timeMs: 0). Without `at`, Android asks MediaMetadataRetriever
+      // for an arbitrary "representative" frame.
+      at: FcVideoThumbnailTime(0, FcVideoThumbnailTimeUnit.microseconds),
     );
   } catch (_) {
     return null;
