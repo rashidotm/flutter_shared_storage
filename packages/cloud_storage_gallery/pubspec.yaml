@@ -30,8 +30,8 @@ dependencies:
   chewie: ^1.13.0
   flutter_cache_manager: ^3.4.1
   # Full-featured folder browser deps:
-  file_picker: ^11.0.0
-  share_plus: ^11.0.0
+  file_picker: ^13.4.0
+  share_plus: ^13.3.1
   image: ^4.3.0
   fc_native_video_thumbnail: ^4.0.0
   mime: ^2.0.0

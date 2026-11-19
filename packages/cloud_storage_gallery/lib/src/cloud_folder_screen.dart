@@ -585,20 +585,19 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
     );
     if (source == null || !mounted) return;
 
-    final result = await FilePicker.pickFiles(
-      allowMultiple: true,
+    // file_picker >= 12 always allows multiple selection in pickFiles()
+    // and returns the list directly (empty when cancelled).
+    final files = await FilePicker.pickFiles(
       // Photos → FileType.media routes to the system photo picker on
       // Android/iOS, which surfaces images + videos from the camera
       // roll. FileType.any opens the generic document picker.
       type: source == _UploadSource.photos ? FileType.media : FileType.any,
     );
-    if (result == null || result.files.isEmpty) return;
+    if (files.isEmpty) return;
 
-    // Filter out picks without a real filesystem path (some pickers can
-    // hand back streams-only entries).
-    final picked = result.files
-        .where((f) => f.path != null)
-        .toList(growable: false);
+    // Filter out picks without a real filesystem path (e.g. a content://
+    // URI that wasn't copied into the app cache).
+    final picked = files.where((f) => f.path != null).toList(growable: false);
     if (picked.isEmpty || !mounted) return;
 
     // Phase 1: generate thumbnails per file. Runs while a per-item
@@ -852,9 +851,8 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
   Future<void> _setThumbnail(CloudNode node) async {
     if (node is CloudFolder) return;
     final l10n = CloudGalleryLocalizations.of(context);
-    final result = await FilePicker.pickFiles(type: FileType.image);
-    if (result == null || result.files.isEmpty) return;
-    final pathStr = result.files.single.path;
+    final pickedImage = await FilePicker.pickFile(type: FileType.image);
+    final pathStr = pickedImage?.path;
     if (pathStr == null) return;
 
     // Resize the picked image into thumb (256w) + preview (1024w) JPEGs.
