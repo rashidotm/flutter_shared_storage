@@ -426,7 +426,7 @@ class CustomTheme {
     );
   }
 
-  static int? getValue(value) {
+  static int? getValue(Object? value) {
     if (value is int) {
       return value;
     }
