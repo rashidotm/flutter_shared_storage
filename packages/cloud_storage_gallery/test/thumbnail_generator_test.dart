@@ -67,15 +67,17 @@ void main() {
     });
 
     test('returns null when the plugin has no frame', () async {
-      FcNativeVideoThumbnailPlatform.instance =
-          _FakeThumbnailPlatform(() async => null);
+      FcNativeVideoThumbnailPlatform.instance = _FakeThumbnailPlatform(
+        () async => null,
+      );
 
       expect(await generateThumbnails(video, mimeType: 'video/mp4'), isNull);
     });
 
     test('returns null (does not throw) when the plugin fails', () async {
-      FcNativeVideoThumbnailPlatform.instance =
-          _FakeThumbnailPlatform(() async => throw Exception('decode failed'));
+      FcNativeVideoThumbnailPlatform.instance = _FakeThumbnailPlatform(
+        () async => throw Exception('decode failed'),
+      );
 
       expect(await generateThumbnails(video, mimeType: 'video/mp4'), isNull);
     });
@@ -93,17 +95,19 @@ void main() {
     });
   });
 
-  test('returns null for non-media types without touching the plugin',
-      () async {
-    final fake = _FakeThumbnailPlatform(() async => _jpeg(10, 10));
-    FcNativeVideoThumbnailPlatform.instance = fake;
+  test(
+    'returns null for non-media types without touching the plugin',
+    () async {
+      final fake = _FakeThumbnailPlatform(() async => _jpeg(10, 10));
+      FcNativeVideoThumbnailPlatform.instance = fake;
 
-    final result = await generateThumbnails(
-      File('report.pdf'),
-      mimeType: 'application/pdf',
-    );
+      final result = await generateThumbnails(
+        File('report.pdf'),
+        mimeType: 'application/pdf',
+      );
 
-    expect(result, isNull);
-    expect(fake.calls, isEmpty);
-  });
+      expect(result, isNull);
+      expect(fake.calls, isEmpty);
+    },
+  );
 }

@@ -46,8 +46,9 @@ class CloudMediaViewer extends StatefulWidget {
 }
 
 class _CloudMediaViewerState extends State<CloudMediaViewer> {
-  late final PageController _controller =
-      PageController(initialPage: widget.initialIndex);
+  late final PageController _controller = PageController(
+    initialPage: widget.initialIndex,
+  );
 
   @override
   void dispose() {
@@ -93,11 +94,10 @@ class _ImagePage extends StatelessWidget {
           child: CachedNetworkImage(
             imageUrl: url,
             fit: BoxFit.contain,
-            placeholder: (_, __) =>
+            placeholder: (_, _) =>
                 const Center(child: CircularProgressIndicator()),
-            errorWidget: (_, __, ___) => const Center(
-              child: Icon(Icons.broken_image, size: 64),
-            ),
+            errorWidget: (_, _, _) =>
+                const Center(child: Icon(Icons.broken_image, size: 64)),
           ),
           minScale: PhotoViewComputedScale.contained,
           maxScale: PhotoViewComputedScale.covered * 4,
@@ -166,16 +166,16 @@ class _VideoPageState extends State<_VideoPage> {
           // controls there too.
           routePageBuilder: (context, animation, secondary, provider) =>
               Scaffold(
-            resizeToAvoidBottomInset: false,
-            body: Container(
-              alignment: Alignment.center,
-              color: Colors.black,
-              // Temporary migration utility; remove with #4 once chewie
-              // is on material_ui.
-              // ignore: deprecated_member_use
-              child: MaterialUiCompatibilityBridge(child: provider),
-            ),
-          ),
+                resizeToAvoidBottomInset: false,
+                body: Container(
+                  alignment: Alignment.center,
+                  color: Colors.black,
+                  // Temporary migration utility; remove with #4 once chewie
+                  // is on material_ui.
+                  // ignore: deprecated_member_use
+                  child: MaterialUiCompatibilityBridge(child: provider),
+                ),
+              ),
         );
       });
     } catch (e) {
@@ -194,9 +194,7 @@ class _VideoPageState extends State<_VideoPage> {
   @override
   Widget build(BuildContext context) {
     if (_error != null) {
-      return Center(
-        child: Text('Failed to load video: $_error'),
-      );
+      return Center(child: Text('Failed to load video: $_error'));
     }
     final c = _chewie;
     if (c == null) {

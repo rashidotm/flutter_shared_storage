@@ -79,13 +79,13 @@ class _CloudFolderPickerScreenState extends State<_CloudFolderPickerScreen> {
       : null;
 
   static CloudFolder _syntheticRoot() => CloudFolder(
-        id: kRootFolderId,
-        name: '',
-        parentId: '',
-        path: '',
-        createdAt: DateTime.fromMillisecondsSinceEpoch(0),
-        updatedAt: DateTime.fromMillisecondsSinceEpoch(0),
-      );
+    id: kRootFolderId,
+    name: '',
+    parentId: '',
+    path: '',
+    createdAt: DateTime.fromMillisecondsSinceEpoch(0),
+    updatedAt: DateTime.fromMillisecondsSinceEpoch(0),
+  );
 
   /// Tap on a subfolder in the list — extend the chain by one.
   void _navigateInto(CloudFolder folder) {
@@ -195,8 +195,7 @@ class _CloudFolderPickerScreenState extends State<_CloudFolderPickerScreen> {
                   final Widget body = folders.isEmpty
                       ? Center(
                           child: Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 50),
+                            padding: const EdgeInsets.symmetric(horizontal: 50),
                             child: Text(
                               l10n.moveHereEmptyHint(moveHereLabel),
                               style: TextStyle(color: scheme.onPrimary),

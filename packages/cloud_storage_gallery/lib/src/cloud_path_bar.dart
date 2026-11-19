@@ -62,10 +62,7 @@ class CloudPathBar extends StatelessWidget {
               tooltip: MaterialLocalizations.of(context).backButtonTooltip,
               onPressed: onBack,
             ),
-            IconButton(
-              icon: const Icon(Icons.arrow_upward),
-              onPressed: onUp,
-            ),
+            IconButton(icon: const Icon(Icons.arrow_upward), onPressed: onUp),
             Expanded(
               child: CloudFolderBreadcrumb(
                 storage: storage,
