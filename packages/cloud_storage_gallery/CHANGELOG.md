@@ -36,6 +36,13 @@ has the same thumbnailer, dependency upgrades and fixes on
 
 ### Fixes
 
+- iOS: **Upload → Photos** and **Set thumbnail** ask the photo picker
+  for compatible formats. file_picker 13 otherwise returns originals, so
+  iPhone photos arrived as HEIC, which can't be decoded for thumbnails:
+  uploads got no thumbnail/preview and Set thumbnail did nothing (#6).
+  Photos now come back as JPEG, as in 0.6.6. **Behavior change:** HEVC
+  videos picked from Photos are converted to H.264 by iOS before upload,
+  which takes longer for long clips.
 - **Android builds on Gradle 9 again.** `video_thumbnail` (unmaintained;
   `jcenter()` + AGP 4.1) is replaced by `fc_native_video_thumbnail`
   ^4.0.0. Frames are taken in memory, so there is no temp file, and

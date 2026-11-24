@@ -592,6 +592,14 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
       // Android/iOS, which surfaces images + videos from the camera
       // roll. FileType.any opens the generic document picker.
       type: source == _UploadSource.photos ? FileType.media : FileType.any,
+      // iOS photo picker: request compatible formats. The default returns
+      // originals, so camera photos arrive as HEIC, which `image` can't
+      // decode, and they'd upload without thumbnail/preview. With
+      // `compatible`, photos come back as JPEG (as with file_picker 11)
+      // and HEVC videos are transcoded to H.264. No effect elsewhere.
+      darwinOptions: const DarwinOptions(
+        assetRepresentationMode: DarwinAssetRepresentationMode.compatible,
+      ),
     );
     if (files.isEmpty) return;
 
