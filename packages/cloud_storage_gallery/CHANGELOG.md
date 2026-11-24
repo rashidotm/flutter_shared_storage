@@ -45,6 +45,13 @@ to `material_ui` keep consistent Material types and theming.
 
 ### Fixes
 
+- iOS: **Upload → Photos** and **Set thumbnail** ask the photo picker
+  for compatible formats. file_picker 13 otherwise returns originals, so
+  iPhone photos arrived as HEIC, which can't be decoded for thumbnails:
+  uploads got no thumbnail/preview and Set thumbnail did nothing (#6).
+  Photos now come back as JPEG, as in 0.6.6. **Behavior change:** HEVC
+  videos picked from Photos are converted to H.264 by iOS before upload,
+  which takes longer for long clips.
 - `CloudMediaViewer` no longer leaks a `VideoPlayerController` when a
   video page is closed or swiped away before it finishes initializing,
   or when initialization fails.
