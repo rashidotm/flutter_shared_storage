@@ -851,7 +851,16 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
   Future<void> _setThumbnail(CloudNode node) async {
     if (node is CloudFolder) return;
     final l10n = CloudGalleryLocalizations.of(context);
-    final pickedImage = await FilePicker.pickFile(type: FileType.image);
+    final pickedImage = await FilePicker.pickFile(
+      type: FileType.image,
+      // iOS: file_picker 13's default hands back the original asset, which
+      // for camera photos is HEIC — and `image` can't decode HEIC, so
+      // generateThumbnails would return null and nothing would happen.
+      // `compatible` makes the photo picker transcode to JPEG.
+      darwinOptions: const DarwinOptions(
+        assetRepresentationMode: DarwinAssetRepresentationMode.compatible,
+      ),
+    );
     final pathStr = pickedImage?.path;
     if (pathStr == null) return;
 
