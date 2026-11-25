@@ -30,6 +30,12 @@ jobs:
       - name: Activate melos
         run: dart pub global activate melos
 
+      - name: Install workspace tooling
+        # Installs the workspace's own melos. `--no-example`: a root
+        # `pub get` also resolves `example/`, which can't resolve until
+        # melos has written its path overrides.
+        run: dart pub get --no-example
+
       - name: Bootstrap workspace
         run: melos bootstrap
 
@@ -56,6 +62,12 @@ jobs:
 
       - name: Activate melos
         run: dart pub global activate melos
+
+      - name: Install workspace tooling
+        # Installs the workspace's own melos. `--no-example`: a root
+        # `pub get` also resolves `example/`, which can't resolve until
+        # melos has written its path overrides.
+        run: dart pub get --no-example
 
       - name: Bootstrap workspace
         run: melos bootstrap
