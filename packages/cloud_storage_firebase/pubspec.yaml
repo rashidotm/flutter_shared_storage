@@ -1,6 +1,6 @@
 name: cloud_storage_firebase
 description: Firebase Storage + Cloud Firestore implementation of cloud_storage_platform_interface. Caller-supplied paths, no uid assumption.
-version: 0.1.2
+version: 0.1.3
 
 homepage: https://github.com/rashidotm/flutter_shared_storage
 repository: https://github.com/rashidotm/flutter_shared_storage/tree/master/packages/cloud_storage_firebase
@@ -21,10 +21,13 @@ dependencies:
   flutter:
     sdk: flutter
   cloud_storage_platform_interface: ^0.1.2
-  firebase_core: ^4.0.0
-  firebase_auth: ^6.0.0
-  firebase_storage: ^13.0.0
-  cloud_firestore: ^6.0.0
+  # FlutterFire v4 and v5 are both supported: v5's breaking changes are
+  # native-SDK bumps only (Firebase iOS SDK 13, Android BoM 35 /
+  # minSdk 24); the Dart APIs used here are unchanged. Tests pass on both.
+  firebase_core: ">=4.0.0 <6.0.0"
+  firebase_auth: ">=6.0.0 <8.0.0"
+  firebase_storage: ">=13.0.0 <15.0.0"
+  cloud_firestore: ">=6.0.0 <8.0.0"
   flutter_cache_manager: ^3.4.1
   path: ^1.9.0
   path_provider: ^2.1.6
@@ -35,13 +38,10 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
-  # 4.2.0+ targets cloud_firestore >= 6.7.1 (4.5.0: ^7.1.0). The
-  # workspace override below pins cloud_firestore < 6.7.0, and overrides
-  # bypass fake_cloud_firestore's own constraint, so without this cap a
-  # fresh resolve (CI) picks 4.5.0 against 6.6.0 and tests fail to
-  # compile. Lift together with the cloud_firestore pin (#4).
-  fake_cloud_firestore: ">=4.1.1 <4.2.0"
-  firebase_storage_mocks: ^0.8.1
+  # 4.1.x pairs with cloud_firestore 6.x, 4.5.0 with 7.x.
+  fake_cloud_firestore: ">=4.1.1 <5.0.0"
+  # 0.8.x pairs with firebase_storage 13.x, 0.9.x with 14.x.
+  firebase_storage_mocks: ">=0.8.1 <0.10.0"
   mocktail: ^1.0.4
 
 # For monorepo development, always resolve the sibling package from the
@@ -50,14 +50,3 @@ dev_dependencies:
 dependency_overrides:
   cloud_storage_platform_interface:
     path: ../cloud_storage_platform_interface
-  # cloud_firestore 6.7.0 changed WriteBatch.update to a generic
-  # signature that the latest fake_cloud_firestore (4.1.1) doesn't
-  # match — compilation fails in tests. Pin to <6.7.0 in the
-  # workspace only; published consumers keep the ^6.0.0 range from
-  # `dependencies:` above. Remove once fake_cloud_firestore ships a
-  # compatible release.
-  cloud_firestore: ">=6.0.0 <6.7.0"
-  # firebase_storage 13.4.4 references a `FirebasePlugin` type that
-  # isn't in our firebase_core version. Same workspace-only pin;
-  # published consumers keep the ^13.0.0 range from above.
-  firebase_storage: ">=13.0.0 <13.4.4"
