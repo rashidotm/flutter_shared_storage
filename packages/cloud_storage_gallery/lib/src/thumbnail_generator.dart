@@ -1,11 +1,15 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:fc_native_video_thumbnail/fc_native_video_thumbnail.dart';
+// FcVideoThumbnailTime isn't re-exported by the main library.
+import 'package:fc_native_video_thumbnail/fc_native_video_thumbnail_platform_interface.dart'
+    show FcVideoThumbnailTime, FcVideoThumbnailTimeUnit;
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:image/image.dart' as img;
 import 'package:mime/mime.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
 
 /// Two JPEG variants produced from a source media file.
 class MediaThumbnails {
@@ -17,6 +21,12 @@ class MediaThumbnails {
   /// ~1024px wide JPEG. Suitable for full-screen previews.
   final Uint8List preview;
 }
+
+final _videoThumbnailer = FcNativeVideoThumbnail();
+
+/// Height bound passed to the native thumbnailer. Large enough that only
+/// the 1024px width constraint applies for any realistic aspect ratio.
+const _maxFrameHeight = 4096;
 
 /// Generates a thumb (256w) and preview (1024w) JPEG for [file] if the
 /// MIME type is a supported image or video. Returns `null` for unsupported
@@ -51,24 +61,42 @@ Future<MediaThumbnails?> _fromImageBytes(Uint8List bytes) async {
 }
 
 Future<MediaThumbnails?> _fromVideoFile(File file) async {
-  // video_thumbnail extracts a single frame; we then resize with `image`
-  // to get consistent widths across images and videos.
+  // fc_native_video_thumbnail extracts a single frame with the platform's
+  // native decoder; we then resize with `image` to get consistent widths
+  // across images and videos.
   final tmpDir = await getTemporaryDirectory();
   final framePath = p.join(
     tmpDir.path,
     'thumb-${p.basenameWithoutExtension(file.path)}.jpg',
   );
-  final resultPath = await VideoThumbnail.thumbnailFile(
-    video: file.path,
-    thumbnailPath: framePath,
-    imageFormat: ImageFormat.JPEG,
-    maxWidth: 1024,
-    quality: 85,
-  );
-  if (resultPath == null) return null;
-  final frameBytes = await File(resultPath).readAsBytes();
+  final bool created;
   try {
-    await File(resultPath).delete();
+    created = await _videoThumbnailer.saveThumbnailToFile(
+      srcFile: file.path,
+      destFile: framePath,
+      // The plugin fits the frame inside width x height (aspect preserved,
+      // never upscaled). Only the width should limit it, as with
+      // video_thumbnail's `maxWidth: 1024`, so give the height plenty of
+      // room: a 1080x1920 portrait clip must come back 1024 wide, not 576.
+      width: 1024,
+      height: _maxFrameHeight,
+      format: 'jpeg',
+      quality: 85,
+      // The first frame, like video_thumbnail's default (timeMs: 0).
+      // Without `at`, Android asks MediaMetadataRetriever for an
+      // arbitrary "representative" frame.
+      at: FcVideoThumbnailTime(0, FcVideoThumbnailTimeUnit.microseconds),
+    );
+  } on PlatformException {
+    // Native decode failure. video_thumbnail returned null here; keep
+    // that contract ("no variants, upload the original as-is").
+    return null;
+  }
+  if (!created) return null;
+  final frame = File(framePath);
+  final frameBytes = await frame.readAsBytes();
+  try {
+    await frame.delete();
   } catch (_) {
     // ignored — leaking a tempfile is fine
   }

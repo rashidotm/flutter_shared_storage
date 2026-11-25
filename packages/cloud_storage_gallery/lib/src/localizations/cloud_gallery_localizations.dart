@@ -222,8 +222,9 @@ class _CloudGalleryLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) {
-    return CloudGalleryLocalizations.supportedLocales
-        .any((l) => l.languageCode == locale.languageCode);
+    return CloudGalleryLocalizations.supportedLocales.any(
+      (l) => l.languageCode == locale.languageCode,
+    );
   }
 
   @override

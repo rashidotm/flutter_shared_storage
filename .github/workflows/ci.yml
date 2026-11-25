@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [master]
+    branches: [master, "release/**"]
   pull_request:
-    branches: [master]
+    branches: [master, "release/**"]
 
 jobs:
   analyze:
@@ -18,7 +18,7 @@ jobs:
         with:
           # Pinned to match local dev to avoid Dart-version drift
           # breaking fake_cloud_firestore's type overrides.
-          flutter-version: '3.41.1'
+          flutter-version: '3.50.0'
           channel: stable
           cache: true
 
@@ -29,6 +29,12 @@ jobs:
 
       - name: Activate melos
         run: dart pub global activate melos
+
+      - name: Install workspace tooling
+        # Installs the workspace's own melos. `--no-example`: a root
+        # `pub get` also resolves `example/`, which can't resolve until
+        # melos has written its path overrides.
+        run: dart pub get --no-example
 
       - name: Bootstrap workspace
         run: melos bootstrap
@@ -50,12 +56,18 @@ jobs:
         with:
           # Pinned to match local dev to avoid Dart-version drift
           # breaking fake_cloud_firestore's type overrides.
-          flutter-version: '3.41.1'
+          flutter-version: '3.50.0'
           channel: stable
           cache: true
 
       - name: Activate melos
         run: dart pub global activate melos
+
+      - name: Install workspace tooling
+        # Installs the workspace's own melos. `--no-example`: a root
+        # `pub get` also resolves `example/`, which can't resolve until
+        # melos has written its path overrides.
+        run: dart pub get --no-example
 
       - name: Bootstrap workspace
         run: melos bootstrap

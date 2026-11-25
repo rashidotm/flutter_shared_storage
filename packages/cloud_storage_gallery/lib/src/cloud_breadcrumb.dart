@@ -154,7 +154,8 @@ class _CloudFolderBreadcrumbState extends State<CloudFolderBreadcrumb> {
     // still meaningful, still tappable, no visible "empty then populated"
     // pop-in. On subsequent navigations, `_chain` retains the old value
     // until the new one arrives.
-    final chain = _chain ??
+    final chain =
+        _chain ??
         <CloudNode>[
           CloudFolder(
             id: kRootFolderId,
@@ -185,10 +186,7 @@ class _CloudFolderBreadcrumbState extends State<CloudFolderBreadcrumb> {
             InkWell(
               onTap: () => widget.onNavigate(chain[i]),
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                 child: Text(
                   i == 0 ? rootLabel : chain[i].name,
                   style: baseStyle?.copyWith(

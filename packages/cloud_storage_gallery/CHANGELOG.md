@@ -1,3 +1,67 @@
+# 0.7.0
+
+**Builds on Flutter 3.50 / Gradle 9 again. New video thumbnail backend
+and refreshed dependencies.** The widgets keep using
+`package:flutter/material.dart`, and nothing in the dependency tree pulls
+in `material_ui` or `cupertino_ui`, so host apps that haven't migrated
+to `material_ui` keep consistent Material types and theming.
+
+### Thumbnail backend
+
+- `video_thumbnail` is replaced by **`fc_native_video_thumbnail`
+  ^4.0.0**. `video_thumbnail` is unmaintained, and its Android build
+  uses `jcenter()` and compileSdk 33, which fail on Gradle 9.
+  `generateThumbnails` works as before: it extracts one JPEG frame
+  (1024px max width, quality 85) into the temp dir, resizes it into the
+  same `MediaThumbnails` (256w thumb, 1024w preview), deletes the temp
+  frame, and returns `null` when no frame can be produced. It requests
+  the first frame explicitly, and only the width limits the frame size,
+  so portrait clips still get a 1024px-wide preview.
+
+### Dependency changes
+
+| Package | Before | After | Notes |
+|---|---|---|---|
+| `video_thumbnail` | ^0.5.3 | removed | replaced by `fc_native_video_thumbnail` |
+| `fc_native_video_thumbnail` | — | ^4.0.0 | new; iOS 16 / macOS 13 / Android minSdk 24 |
+| `file_picker` | ^11.0.0 | ^13.4.0 | **API:** `pickFiles()` returns `List<PlatformFile>`; `pickFile()` for one file |
+| `share_plus` | ^11.0.0 | ^13.3.1 | API unchanged |
+| `open_filex` | ^4.5.0 | ^5.0.0 | iOS 13 floor; API unchanged |
+| `video_player` | ^2.9.2 | ^2.14.1 | |
+| `url_launcher` | ^6.3.1 | ^6.3.3 | |
+| `image` | ^4.3.0 | ^4.13.1 | |
+| `mime` | ^2.0.0 | ^2.1.0 | |
+| `chewie` | ^1.13.0 | >=1.13.0 <1.18.0 | 1.18.0+ depends on `material_ui` |
+| `cached_network_image` | ^3.4.1 | ^3.4.1 | held: every 4.x depends on `material_ui` |
+| `path_provider`, `photo_view`, `path`, `flutter_cache_manager` | | unchanged | already at latest compatible |
+
+### Requirements
+
+- Dart **^3.12** / Flutter **>=3.44** (was 3.3 / 3.19). This is the
+  minimum required by `fc_native_video_thumbnail` 4, `video_player`
+  2.14 and `chewie` 1.17.
+- iOS deployment target **16.0** (`fc_native_video_thumbnail`).
+- Android minSdk 24.
+
+### Fixes
+
+- iOS: **Upload → Photos** and **Set thumbnail** ask the photo picker
+  for compatible formats. file_picker 13 otherwise returns originals, so
+  iPhone photos arrived as HEIC, which can't be decoded for thumbnails:
+  uploads got no thumbnail/preview and Set thumbnail did nothing (#6).
+  Photos now come back as JPEG, as in 0.6.6. **Behavior change:** HEVC
+  videos picked from Photos are converted to H.264 by iOS before upload,
+  which takes longer for long clips.
+- `CloudMediaViewer` no longer leaks a `VideoPlayerController` when a
+  video page is closed or swiped away before it finishes initializing,
+  or when initialization fails.
+
+### Internal
+
+- Unit tests for the video thumbnail path.
+- Reformatted with the "tall" `dart format` style (language version
+  >= 3.7).
+
 # 0.6.6
 
 **Fix: `pickCloudFolder` primary paint no longer stops at the

@@ -118,7 +118,8 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
   /// Ancestor chain (root → ... → current). Kept in sync with
   /// [_currentFolderId] by [_navigateTo]. Nullable to signal "not yet
   /// loaded" during the first fetch.
-  late List<CloudNode>? _chain = widget.initialChain ??
+  late List<CloudNode>? _chain =
+      widget.initialChain ??
       (widget.folderId == kRootFolderId ? <CloudNode>[_syntheticRoot()] : null);
 
   /// Internal navigation history for the path bar's back button. Each
@@ -132,13 +133,13 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
   CloudNodeSort _sort = const CloudNodeSort();
 
   static CloudFolder _syntheticRoot() => CloudFolder(
-        id: kRootFolderId,
-        name: '',
-        parentId: '',
-        path: '',
-        createdAt: DateTime.fromMillisecondsSinceEpoch(0),
-        updatedAt: DateTime.fromMillisecondsSinceEpoch(0),
-      );
+    id: kRootFolderId,
+    name: '',
+    parentId: '',
+    path: '',
+    createdAt: DateTime.fromMillisecondsSinceEpoch(0),
+    updatedAt: DateTime.fromMillisecondsSinceEpoch(0),
+  );
 
   @override
   void initState() {
@@ -351,8 +352,9 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
                           _showNodeMenu(node, details.globalPosition),
                       selectionMode: _selectionActive,
                       selectedNodeIds: _selected.keys.toSet(),
-                      onNodeToggleSelection:
-                          widget.readOnly ? null : _toggleSelection,
+                      onNodeToggleSelection: widget.readOnly
+                          ? null
+                          : _toggleSelection,
                     ),
                   ),
                   // FABs positioned bottom-end of the grid area — same
@@ -414,12 +416,12 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
   /// folders-first toggle. The whole thing writes back into [_sort].
   Widget _buildSortMenu(CloudGalleryLocalizations l10n) {
     String fieldLabel(CloudNodeSortField f) => switch (f) {
-          CloudNodeSortField.name => l10n.sortFieldName,
-          CloudNodeSortField.createdAt => l10n.sortFieldDateCreated,
-          CloudNodeSortField.updatedAt => l10n.sortFieldDateModified,
-          CloudNodeSortField.size => l10n.sortFieldSize,
-          CloudNodeSortField.type => l10n.sortFieldType,
-        };
+      CloudNodeSortField.name => l10n.sortFieldName,
+      CloudNodeSortField.createdAt => l10n.sortFieldDateCreated,
+      CloudNodeSortField.updatedAt => l10n.sortFieldDateModified,
+      CloudNodeSortField.size => l10n.sortFieldSize,
+      CloudNodeSortField.type => l10n.sortFieldType,
+    };
     return PopupMenuButton<Object>(
       tooltip: l10n.sortTooltip,
       icon: const Icon(Icons.sort),
@@ -583,19 +585,27 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
     );
     if (source == null || !mounted) return;
 
-    final result = await FilePicker.pickFiles(
-      allowMultiple: true,
+    // file_picker >= 12 always allows multiple selection in pickFiles()
+    // and returns the list directly (empty when cancelled).
+    final files = await FilePicker.pickFiles(
       // Photos → FileType.media routes to the system photo picker on
       // Android/iOS, which surfaces images + videos from the camera
       // roll. FileType.any opens the generic document picker.
       type: source == _UploadSource.photos ? FileType.media : FileType.any,
+      // iOS photo picker: request compatible formats. The default returns
+      // originals, so camera photos arrive as HEIC, which `image` can't
+      // decode, and they'd upload without thumbnail/preview. With
+      // `compatible`, photos come back as JPEG (as with file_picker 11)
+      // and HEVC videos are transcoded to H.264. No effect elsewhere.
+      darwinOptions: const DarwinOptions(
+        assetRepresentationMode: DarwinAssetRepresentationMode.compatible,
+      ),
     );
-    if (result == null || result.files.isEmpty) return;
+    if (files.isEmpty) return;
 
-    // Filter out picks without a real filesystem path (some pickers can
-    // hand back streams-only entries).
-    final picked =
-        result.files.where((f) => f.path != null).toList(growable: false);
+    // Filter out picks without a real filesystem path (e.g. a content://
+    // URI that wasn't copied into the app cache).
+    final picked = files.where((f) => f.path != null).toList(growable: false);
     if (picked.isEmpty || !mounted) return;
 
     // Phase 1: generate thumbnails per file. Runs while a per-item
@@ -780,10 +790,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
     if (node is CloudFile && node.isMedia) {
       Navigator.of(context).push(
         MaterialPageRoute<void>(
-          builder: (_) => _MediaViewerScaffold(
-            files: [node],
-            initialIndex: 0,
-          ),
+          builder: (_) => _MediaViewerScaffold(files: [node], initialIndex: 0),
         ),
       );
       return;
@@ -852,9 +859,17 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
   Future<void> _setThumbnail(CloudNode node) async {
     if (node is CloudFolder) return;
     final l10n = CloudGalleryLocalizations.of(context);
-    final result = await FilePicker.pickFiles(type: FileType.image);
-    if (result == null || result.files.isEmpty) return;
-    final pathStr = result.files.single.path;
+    final pickedImage = await FilePicker.pickFile(
+      type: FileType.image,
+      // iOS: file_picker 13's default hands back the original asset, which
+      // for camera photos is HEIC — and `image` can't decode HEIC, so
+      // generateThumbnails would return null and nothing would happen.
+      // `compatible` makes the photo picker transcode to JPEG.
+      darwinOptions: const DarwinOptions(
+        assetRepresentationMode: DarwinAssetRepresentationMode.compatible,
+      ),
+    );
+    final pathStr = pickedImage?.path;
     if (pathStr == null) return;
 
     // Resize the picked image into thumb (256w) + preview (1024w) JPEGs.
@@ -914,10 +929,10 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
             child: Text(l10n.buttonCancel),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(
-              context,
-              (name: nameCtrl.text.trim(), url: urlCtrl.text.trim()),
-            ),
+            onPressed: () => Navigator.pop(context, (
+              name: nameCtrl.text.trim(),
+              url: urlCtrl.text.trim(),
+            )),
             child: Text(l10n.buttonCreate),
           ),
         ],
@@ -1034,14 +1049,11 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
     final l10n = CloudGalleryLocalizations.of(context);
     final rows = <MapEntry<String, String>>[
       MapEntry(l10n.infoLabelName, node.name),
-      MapEntry(
-        l10n.infoLabelType,
-        switch (node) {
-          CloudFolder() => l10n.infoTypeFolder,
-          CloudLink() => 'Link',
-          CloudFile() => l10n.infoTypeFile,
-        },
-      ),
+      MapEntry(l10n.infoLabelType, switch (node) {
+        CloudFolder() => l10n.infoTypeFolder,
+        CloudLink() => 'Link',
+        CloudFile() => l10n.infoTypeFile,
+      }),
       MapEntry(l10n.infoLabelPath, node.path.isEmpty ? '/' : node.path),
       MapEntry(l10n.infoLabelCreated, node.createdAt.toLocal().toString()),
       MapEntry(l10n.infoLabelUpdated, node.updatedAt.toLocal().toString()),
@@ -1062,10 +1074,9 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
               for (final e in rows) ...[
                 Text(
                   e.key,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 Text(e.value),
                 const SizedBox(height: 8),
@@ -1090,9 +1101,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
       context: context,
       builder: (_) => AlertDialog(
         title: Text(l10n.deleteConfirmTitle(node.name)),
-        content: Text(
-          isFolder ? l10n.deleteFolderBody : l10n.deleteFileBody,
-        ),
+        content: Text(isFolder ? l10n.deleteFolderBody : l10n.deleteFileBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -1177,8 +1186,10 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
     if (nodes.isEmpty) return;
     // Exclude any selected FOLDER from valid destinations — you can't
     // move a folder into itself. Files-only selections have no exclusions.
-    final firstSelectedFolderId =
-        nodes.whereType<CloudFolder>().map((f) => f.id).firstOrNull;
+    final firstSelectedFolderId = nodes
+        .whereType<CloudFolder>()
+        .map((f) => f.id)
+        .firstOrNull;
     final target = await pickCloudFolder(
       context,
       storage: _storage,
@@ -1229,10 +1240,7 @@ class _CloudFolderScreenState extends State<CloudFolderScreen> {
 /// Scaffold + AppBar wrapper for [CloudMediaViewer] that keeps its title
 /// in sync with the currently-visible file as the user swipes.
 class _MediaViewerScaffold extends StatefulWidget {
-  const _MediaViewerScaffold({
-    required this.files,
-    required this.initialIndex,
-  });
+  const _MediaViewerScaffold({required this.files, required this.initialIndex});
 
   final List<CloudFile> files;
   final int initialIndex;
@@ -1248,8 +1256,11 @@ class _MediaViewerScaffoldState extends State<_MediaViewerScaffold> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title:
-            Text(_current.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+        title: Text(
+          _current.name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
       ),
       body: CloudMediaViewer(
         files: widget.files,
